@@ -1,0 +1,141 @@
+{% extends "web/base.html" %}
+
+{% block title %}Dashboard - Music Player{% endblock %}
+
+{% block nav_dashboard %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📊 Dashboard</h1>
+    <p>Welcome back, {{ user.username }}!</p>
+</div>
+
+<div class="grid grid-2">
+    <!-- User Profile Card -->
+    <div class="card">
+        <h2>👤 Your Profile</h2>
+        <p><strong>Role:</strong> <span class="badge badge-{{ user_profile.role }}">{{ user_profile.get_role_display }}</span></p>
+        <p><strong>Email:</strong> {{ user.email }}</p>
+        <p><strong>Member since:</strong> {{ user.date_joined|date:"F j, Y" }}</p>
+        {% if user_profile.avatar_url %}
+            <img src="{{ user_profile.avatar_url }}" alt="Avatar" style="width: 100px; height: 100px; border-radius: 50%; margin-top: 1rem;">
+        {% endif %}
+        <div style="margin-top: 1rem;">
+            <a href="{% url 'web:profile' %}" class="btn btn-secondary btn-sm">Edit Profile</a>
+        </div>
+    </div>
+
+    <!-- Quick Stats Card -->
+    <div class="card">
+        <h2>📈 Quick Stats</h2>
+        <div class="grid grid-2">
+            <div style="text-align: center; padding: 1rem;">
+                <div style="font-size: 2rem; color: #00d4ff;">{{ my_requests.count }}</div>
+                <div style="color: #a0a0a0;">Your Requests</div>
+            </div>
+            {% if user_profile.can_moderate %}
+            <div style="text-align: center; padding: 1rem;">
+                <div style="font-size: 2rem; color: #ffb74d;">{{ pending_requests }}</div>
+                <div style="color: #a0a0a0;">Pending Review</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if user_profile.can_moderate and pending_requests_list %}
+<!-- Pending Change Requests (Moderators Only) -->
+<div class="card">
+    <h2>🔍 Pending Change Requests</h2>
+    <p style="color: #a0a0a0; margin-bottom: 1rem;">Review and approve or reject proposed changes</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Field</th>
+                <th>Requested By</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in pending_requests_list %}
+            <tr>
+                <td>
+                    <span class="badge">{{ request.get_model_type_display }}</span>
+                </td>
+                <td>
+                    <strong>{{ request.field_name|title }}</strong>
+                    <br><small style="color: #a0a0a0;">{{ request.old_value|truncatechars:30 }} → {{ request.new_value|truncatechars:30 }}</small>
+                </td>
+                <td>{{ request.user.username }}</td>
+                <td>{{ request.created_at|date:"M j, Y" }}</td>
+                <td>
+                    <a href="{% url 'web:change_request_review' request.id %}" class="btn btn-primary btn-sm">Review</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if pending_requests > 10 %}
+    <div style="text-align: center; margin-top: 1rem;">
+        <a href="{% url 'web:change_request_list' %}?status=pending" class="btn btn-secondary">View All {{ pending_requests }} Pending Requests</a>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- My Change Requests -->
+<div class="card">
+    <h2>📝 My Change Requests</h2>
+    <p style="color: #a0a0a0; margin-bottom: 1rem;">Track the status of your submitted change requests</p>
+
+    {% if my_requests %}
+    <table>
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Field</th>
+                <th>Status</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in my_requests %}
+            <tr>
+                <td>{{ request.get_model_type_display }}</td>
+                <td>
+                    <strong>{{ request.field_name|title }}</strong>
+                    <br><small style="color: #a0a0a0;">{{ request.new_value|truncatechars:40 }}</small>
+                </td>
+                <td>
+                    <span class="badge badge-{{ request.status }}">{{ request.get_status_display }}</span>
+                </td>
+                <td>{{ request.created_at|date:"M j, Y" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">📝</div>
+        <p>You haven't submitted any change requests yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Quick Actions -->
+<div class="card">
+    <h2>⚡ Quick Actions</h2>
+    <div class="grid grid-4" style="margin-top: 1rem;">
+        <a href="{% url 'web:song_list' %}" class="btn btn-secondary">🎵 Browse Songs</a>
+        <a href="{% url 'web:album_list' %}" class="btn btn-secondary">💿 Browse Albums</a>
+        <a href="{% url 'web:artist_list' %}" class="btn btn-secondary">🎤 Browse Artists</a>
+        {% if user.profile.role == 'owner' %}
+        <a href="{% url 'web:song_create' %}" class="btn btn-primary">➕ Add Song</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

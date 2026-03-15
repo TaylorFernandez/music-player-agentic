@@ -1,0 +1,155 @@
+{% extends "web/base.html" %}
+
+{% block title %}Change Requests - Music Player{% endblock %}
+{% block nav_moderation %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🔍 Change Requests</h1>
+    <p>Review and manage proposed changes to the music library</p>
+</div>
+
+{% if user.userprofile.can_moderate %}
+<div class="card" style="background: rgba(0, 212, 255, 0.1); border-color: rgba(0, 212, 255, 0.3);">
+    <p style="color: #00d4ff;"><strong>🔐 Moderator Access</strong></p>
+    <p style="color: #a0a0a0;">You can review and approve or reject change requests from all users.</p>
+</div>
+{% else %}
+<div class="card" style="background: rgba(255, 193, 7, 0.1); border-color: rgba(255, 193, 7, 0.3);">
+    <p style="color: #ffb74d;"><strong>📝 Your Requests</strong></p>
+    <p style="color: #a0a0a0;">You can view your own change requests below. Moderators will review your submissions.</p>
+</div>
+{% endif %}
+
+<div class="filter-bar">
+    <form method="get" class="filter-bar" style="background: none; border: none; padding: 0; margin: 0; width: 100%;">
+        <div style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; width: 100%;">
+            <div class="filter-group" style="flex: 1; min-width: 150px;">
+                <label for="status">Status</label>
+                <select id="status" name="status">
+                    <option value="">All Statuses</option>
+                    {% for status in statuses %}
+                        <option value="{{ status }}" {% if selected_status == status %}selected{% endif %}>
+                            {{ status|title }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group" style="flex: 1; min-width: 150px;">
+                <label for="model_type">Type</label>
+                <select id="model_type" name="model_type">
+                    <option value="">All Types</option>
+                    {% for model_type in model_types %}
+                        <option value="{{ model_type }}" {% if selected_model == model_type %}selected{% endif %}>
+                            {{ model_type|title }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a href="{% url 'web:change_request_list' %}" class="btn btn-secondary">Clear</a>
+        </div>
+    </form>
+</div>
+
+{% if change_requests %}
+<div class="card">
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Type</th>
+                <th>Field</th>
+                <th>Change</th>
+                <th>Requested By</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in change_requests %}
+            <tr>
+                <td><code style="color: #a0a0a0;">#{{ request.id }}</code></td>
+                <td>
+                    <span class="badge" style="background: rgba(123, 44, 191, 0.2); color: #c77dff;">
+                        {{ request.get_model_type_display }}
+                    </span>
+                </td>
+                <td><strong>{{ request.field_name|title }}</strong></td>
+                <td>
+                    <small style="color: #a0a0a0;">
+                        {% if request.model_id == 0 %}
+                            <em>New {{ request.get_model_type_display }}</em>
+                        {% else %}
+                            {{ request.old_value|truncatechars:20 }} → {{ request.new_value|truncatechars:20 }}
+                        {% endif %}
+                    </small>
+                </td>
+                <td>{{ request.user.username }}</td>
+                <td>
+                    <span class="badge badge-{{ request.status }}">{{ request.get_status_display }}</span>
+                </td>
+                <td>{{ request.created_at|date:"M j, Y" }}</td>
+                <td>
+                    {% if request.status == 'pending' and user.userprofile.can_moderate %}
+                        <a href="{% url 'web:change_request_review' pk=request.id %}" class="btn btn-primary btn-sm">Review</a>
+                    {% elif request.status == 'pending' %}
+                        <span style="color: #a0a0a0;">Pending</span>
+                    {% elif request.reviewed_by %}
+                        <small style="color: #a0a0a0;">by {{ request.reviewed_by.username }}</small>
+                    {% else %}
+                        <span style="color: #a0a0a0;">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if change_requests.has_other_pages %}
+    <div class="pagination">
+        {% if change_requests.has_previous %}
+            <a href="?page={{ change_requests.previous_page_number }}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_model %}&model_type={{ selected_model }}{% endif %}">Previous</a>
+        {% endif %}
+
+        {% for num in change_requests.paginator.page_range %}
+            {% if change_requests.number == num %}
+                <span class="active">{{ num }}</span>
+            {% elif num > change_requests.number|add:'-3' and num < change_requests.number|add:'3' %}
+                <a href="?page={{ num }}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_model %}&model_type={{ selected_model }}{% endif %}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if change_requests.has_next %}
+            <a href="?page={{ change_requests.next_page_number }}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if selected_model %}&model_type={{ selected_model }}{% endif %}">Next</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <div class="empty-state-icon">📋</div>
+        <h3>No change requests found</h3>
+        <p>There are no change requests matching your criteria.</p>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <h2>ℹ️ About Change Requests</h2>
+    <div style="color: #a0a0a0;">
+        <p><strong style="color: #00d4ff;">What are change requests?</strong></p>
+        <p style="margin-bottom: 1rem;">Change requests allow users to propose modifications to song, album, or artist information. Moderators review and approve or reject these requests to maintain data quality.</p>
+
+        <p><strong style="color: #00d4ff;">Who can submit requests?</strong></p>
+        <p style="margin-bottom: 1rem;">All authenticated users can submit change requests.</p>
+
+        <p><strong style="color: #00d4ff;">Who can review requests?</strong></p>
+        <p>Only users with <strong>Moderator</strong> or <strong>Owner</strong> roles can review and approve change requests.</p>
+    </div>
+</div>
+{% endblock %}

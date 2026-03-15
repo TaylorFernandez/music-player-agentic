@@ -1,0 +1,104 @@
+{% extends "web/base.html" %}
+
+{% block title %}{{ song.title }} - Music Player{% endblock %}
+{% block nav_songs %}active{% endblock %}
+
+{% block content %}
+<div class="detail-header">
+    <div class="detail-image">
+        {% if song.artwork_url %}
+            <img src="{{ song.artwork_url }}" alt="{{ song.title }}">
+        {% else %}
+            🎵
+        {% endif %}
+    </div>
+
+    <div class="detail-info">
+        <h1>{{ song.title }}</h1>
+
+        <div class="detail-meta">
+            <p>
+                <strong>Artists:</strong>
+                {% for artist in song.artists.all %}
+                    <a href="{% url 'web:artist_detail' pk=artist.id %}">{{ artist.name }}</a>{% if not forloop.last %}, {% endif %}
+                {% empty %}
+                    Unknown Artist
+                {% endfor %}
+            </p>
+
+            {% if song.albums.all %}
+            <p>
+                <strong>Albums:</strong>
+                {% for album in song.albums.all %}
+                    <a href="{% url 'web:album_detail' pk=album.id %}">{{ album.title }}</a>{% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </p>
+            {% endif %}
+
+            <p><strong>Duration:</strong> {{ song.formatted_duration }}</p>
+            <p><strong>Added:</strong> {{ song.created_at|date:"F j, Y" }}</p>
+        </div>
+
+        <div class="detail-actions">
+            <a href="#" class="btn btn-primary" onclick="alert('Play functionality coming soon!'); return false;">▶ Play</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'web:song_edit' pk=song.id %}" class="btn btn-secondary">✏ Edit</a>
+            {% endif %}
+            <a href="{% url 'web:song_list' %}" class="btn btn-secondary">← Back to Songs</a>
+        </div>
+    </div>
+</div>
+
+{% if song.lyrics %}
+<div class="card">
+    <h2>📜 Lyrics</h2>
+    <div style="white-space: pre-wrap; line-height: 1.8; color: #c0c0c0;">{{ song.lyrics }}</div>
+</div>
+{% endif %}
+
+<div class="card">
+    <h2>ℹ Song Information</h2>
+    <table>
+        <tr>
+            <td><strong>File Hash:</strong></td>
+            <td><code style="color: #a0a0a0;">{{ song.file_hash }}</code></td>
+        </tr>
+        <tr>
+            <td><strong>Duration:</strong></td>
+            <td>{{ song.duration }} seconds ({{ song.formatted_duration }})</td>
+        </tr>
+        <tr>
+            <td><strong>Last Updated:</strong></td>
+            <td>{{ song.updated_at|date:"F j, Y H:i" }}</td>
+        </tr>
+    </table>
+</div>
+
+{% if user.is_authenticated %}
+<div class="card">
+    <h2>📝 Request a Change</h2>
+    <p style="color: #a0a0a0; margin-bottom: 1rem;">
+        {% if user.userprofile.role == 'owner' %}
+            As an owner, you can directly edit this song's information.
+        {% else %}
+            Submit a change request to modify this song's information. A moderator will review your request.
+        {% endif %}
+    </p>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <a href="{% url 'web:song_edit' pk=song.id %}" class="btn btn-primary">Submit Change Request</a>
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <h2>🔗 Quick Links</h2>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        {% for album in song.albums.all %}
+            <a href="{% url 'web:album_detail' pk=album.id %}" class="btn btn-secondary">💿 View "{{ album.title }}"</a>
+        {% endfor %}
+        {% for artist in song.artists.all %}
+            <a href="{% url 'web:artist_detail' pk=artist.id %}" class="btn btn-secondary">🎤 View {{ artist.name }}</a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

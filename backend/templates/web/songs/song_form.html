@@ -1,0 +1,103 @@
+{% extends "web/base.html" %}
+
+{% block title %}Add Song - Music Player{% endblock %}
+{% block nav_songs %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>➕ Add New Song</h1>
+    <p>Create a new song entry in the library</p>
+</div>
+
+<div class="card">
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="title">Song Title *</label>
+            <input type="text" id="title" name="title" required placeholder="Enter song title">
+        </div>
+
+        <div class="form-group">
+            <label for="duration">Duration (seconds) *</label>
+            <input type="number" id="duration" name="duration" required min="0" placeholder="e.g., 240">
+        </div>
+
+        <div class="form-group">
+            <label for="artists">Artists *</label>
+            <select id="artists" name="artists" multiple required style="height: 150px;">
+                {% for artist in artists %}
+                    <option value="{{ artist.id }}">{{ artist.name }}</option>
+                {% endfor %}
+            </select>
+            <small style="color: #a0a0a0;">Hold Ctrl/Cmd to select multiple artists. First artist will be set as main.</small>
+        </div>
+
+        <div class="form-group">
+            <label for="albums">Albums</label>
+            <select id="albums" name="albums" multiple style="height: 100px;">
+                {% for album in albums %}
+                    <option value="{{ album.id }}">{{ album.title }}</option>
+                {% endfor %}
+            </select>
+            <small style="color: #a0a0a0;">Optional - Hold Ctrl/Cmd to select multiple albums.</small>
+        </div>
+
+        <div class="form-group">
+            <label for="track_numbers">Track Numbers</label>
+            <input type="text" id="track_numbers" name="track_numbers" placeholder="e.g., 1 (comma-separated if multiple albums)">
+            <small style="color: #a0a0a0;">Track number for each album selected above (same order).</small>
+        </div>
+
+        <div class="form-group">
+            <label for="file_hash">File Hash (SHA-256)</label>
+            <input type="text" id="file_hash" name="file_hash" maxlength="64" placeholder="Optional - SHA-256 hash of audio file">
+        </div>
+
+        <div class="form-group">
+            <label for="artwork_url">Artwork URL</label>
+            <input type="url" id="artwork_url" name="artwork_url" placeholder="https://example.com/artwork.jpg">
+        </div>
+
+        <div class="form-group">
+            <label for="lyrics">Lyrics</label>
+            <textarea id="lyrics" name="lyrics" rows="8" placeholder="Enter song lyrics..."></textarea>
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary">Save Song</button>
+            <a href="{% url 'web:song_list' %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <h3>💡 Tips</h3>
+    <ul style="color: #a0a0a0; margin-left: 1.5rem;">
+        <li>Duration should be in seconds (e.g., 3 minutes = 180 seconds)</li>
+        <li>Select multiple artists if the song features multiple performers</li>
+        <li>The file hash helps identify duplicate songs and match with local files</li>
+        <li>Artwork URL can be any publicly accessible image URL</li>
+        {% if user.userprofile.role != 'owner' %}
+        <li><strong>Note:</strong> Your submission will be sent for review before being added to the library.</li>
+        {% endif %}
+    </ul>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-calculate duration from MM:SS input
+document.getElementById('duration').addEventListener('change', function() {
+    const value = this.value;
+    if (value && value.includes(':')) {
+        const parts = value.split(':');
+        if (parts.length === 2) {
+            const minutes = parseInt(parts[0]) || 0;
+            const seconds = parseInt(parts[1]) || 0;
+            this.value = (minutes * 60) + seconds;
+        }
+    }
+});
+</script>
+{% endblock %}

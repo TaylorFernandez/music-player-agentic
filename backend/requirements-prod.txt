@@ -1,0 +1,67 @@
+# Production Requirements for Music Player Backend
+# Django Core
+Django==6.0.3
+django-allauth==65.3.0
+django-cors-headers==4.6.0
+djangorestframework==3.15.2
+
+# Database
+psycopg2-binary==2.9.10  # PostgreSQL adapter
+# For better performance in production, consider using psycopg2 (requires PostgreSQL development headers)
+
+# Image Processing
+Pillow==11.0.0  # Image handling for artwork uploads
+
+# Production Server
+gunicorn==23.0.0  # WSGI HTTP Server
+# Alternative: uwsgi==2.0.27
+
+# Security & Performance
+django-secure==1.0.2  # Security middleware
+django-ratelimit==4.1.0  # Rate limiting
+whitenoise==6.8.2  # Static file serving
+
+# Caching (Optional)
+# redis==5.2.0  # For Redis caching
+# django-redis==5.4.0  # Django Redis backend
+
+# Monitoring & Debugging
+django-debug-toolbar==4.4.6  # Debug toolbar (disable in production)
+sentry-sdk==2.17.0  # Error tracking (optional)
+
+# Testing
+pytest==8.3.3
+pytest-django==4.9.0
+pytest-cov==6.0.0
+coverage==7.6.8
+
+# API Documentation (Optional)
+# drf-yasg==1.21.8  # Swagger/OpenAPI documentation
+# drf-spectacular==0.28.0  # Alternative API documentation
+
+# Environment Management
+python-dotenv==1.0.1  # Load environment variables from .env
+
+# HTTP Client
+requests==2.32.3  # For external API calls
+# OR use httpx==0.28.0 for async support
+
+# Task Queue (Optional)
+# celery==5.4.0  # Distributed task queue
+# django-celery-beat==2.7.0  # Periodic tasks
+# django-celery-results==2.5.1  # Task results backend
+
+# Additional Security
+django-axes==7.0.0  # Login attempt tracking
+django-csp==3.8  # Content Security Policy
+
+# Performance
+django-compressor==4.5  # Asset compression
+django-storages==1.14.4  # Storage backends (S3, Azure, etc)
+
+# For AWS S3 (Optional)
+# boto3==1.35.0  # AWS SDK for Python
+# botocore==1.35.0
+
+# For Azure Storage (Optional)
+# azure-storage-blob==12.24.0

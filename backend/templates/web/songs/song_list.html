@@ -1,0 +1,115 @@
+{% extends "web/base.html" %}
+
+{% block title %}Songs - Music Player{% endblock %}
+{% block nav_songs %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🎵 Songs</h1>
+    <p>Browse and manage your music library</p>
+</div>
+
+<div class="filter-bar">
+    <form method="get" class="filter-bar" style="background: none; border: none; padding: 0; margin: 0; width: 100%;">
+        <div style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; width: 100%;">
+            <div class="filter-group" style="flex: 2; min-width: 200px;">
+                <label for="search">Search</label>
+                <input type="text" id="search" name="search" value="{{ search }}" placeholder="Search songs...">
+            </div>
+
+            <div class="filter-group" style="flex: 1; min-width: 150px;">
+                <label for="artist">Artist</label>
+                <select id="artist" name="artist">
+                    <option value="">All Artists</option>
+                    {% for artist in artists %}
+                        <option value="{{ artist.id }}" {% if selected_artist == artist.id|stringformat:"s" %}selected{% endif %}>
+                            {{ artist.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group" style="flex: 1; min-width: 150px;">
+                <label for="album">Album</label>
+                <select id="album" name="album">
+                    <option value="">All Albums</option>
+                    {% for album in albums %}
+                        <option value="{{ album.id }}" {% if selected_album == album.id|stringformat:"s" %}selected{% endif %}>
+                            {{ album.title }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group" style="flex: 1; min-width: 120px;">
+                <label for="sort">Sort By</label>
+                <select id="sort" name="sort">
+                    <option value="title" {% if sort == 'title' %}selected{% endif %}>Title (A-Z)</option>
+                    <option value="-title" {% if sort == '-title' %}selected{% endif %}>Title (Z-A)</option>
+                    <option value="created" {% if sort == 'created' %}selected{% endif %}>Recently Added</option>
+                    <option value="duration" {% if sort == 'duration' %}selected{% endif %}>Duration</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a href="{% url 'web:song_list' %}" class="btn btn-secondary">Clear</a>
+        </div>
+    </form>
+</div>
+
+{% if songs %}
+    <div class="grid grid-4">
+        {% for song in songs %}
+        <a href="{% url 'web:song_detail' pk=song.id %}" class="item-card">
+            <div class="item-card-image">
+                {% if song.artwork_url %}
+                    <img src="{{ song.artwork_url }}" alt="{{ song.title }}">
+                {% else %}
+                    🎵
+                {% endif %}
+            </div>
+            <div class="item-card-content">
+                <div class="item-card-title">{{ song.title }}</div>
+                <div class="item-card-subtitle">
+                    {% for artist in song.artists.all %}{{ artist.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                    <br>
+                    <small>{{ song.formatted_duration }}</small>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    {% if songs.has_other_pages %}
+    <div class="pagination">
+        {% if songs.has_previous %}
+            <a href="?page={{ songs.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if selected_artist %}&artist={{ selected_artist }}{% endif %}{% if selected_album %}&album={{ selected_album }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">Previous</a>
+        {% endif %}
+
+        {% for num in songs.paginator.page_range %}
+            {% if songs.number == num %}
+                <span class="active">{{ num }}</span>
+            {% elif num > songs.number|add:'-3' and num < songs.number|add:'3' %}
+                <a href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if selected_artist %}&artist={{ selected_artist }}{% endif %}{% if selected_album %}&album={{ selected_album }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if songs.has_next %}
+            <a href="?page={{ songs.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if selected_artist %}&artist={{ selected_artist }}{% endif %}{% if selected_album %}&album={{ selected_album }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">Next</a>
+        {% endif %}
+    </div>
+    {% endif %}
+{% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">🎵</div>
+        <h3>No songs found</h3>
+        <p>Try adjusting your search or filters</p>
+    </div>
+{% endif %}
+
+{% if user.is_authenticated %}
+<div style="margin-top: 2rem;">
+    <a href="#" class="btn btn-primary" onclick="alert('Song creation form coming soon!'); return false;">+ Add Song</a>
+</div>
+{% endif %}
+{% endblock %}

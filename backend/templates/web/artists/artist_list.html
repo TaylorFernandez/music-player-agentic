@@ -1,0 +1,82 @@
+{% extends "web/base.html" %}
+
+{% block title %}Artists - Music Player{% endblock %}
+{% block nav_artists %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🎤 Artists</h1>
+    <p>Browse artists in your music library</p>
+</div>
+
+<div class="filter-bar">
+    <form method="get" class="filter-bar" style="background: none; border: none; padding: 0; margin: 0; width: 100%;">
+        <div style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; width: 100%;">
+            <div class="filter-group" style="flex: 2; min-width: 200px;">
+                <label for="search">Search</label>
+                <input type="text" id="search" name="search" value="{{ search }}" placeholder="Search artists...">
+            </div>
+
+            <div class="filter-group" style="flex: 1; min-width: 120px;">
+                <label for="sort">Sort By</label>
+                <select id="sort" name="sort">
+                    <option value="name" {% if sort == 'name' %}selected{% endif %}>Name (A-Z)</option>
+                    <option value="songs" {% if sort == 'songs' %}selected{% endif %}>Most Songs</option>
+                    <option value="albums" {% if sort == 'albums' %}selected{% endif %}>Most Albums</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a href="{% url 'web:artist_list' %}" class="btn btn-secondary">Clear</a>
+        </div>
+    </form>
+</div>
+
+{% if artists %}
+    <div class="grid grid-4">
+        {% for artist in artists %}
+        <a href="{% url 'web:artist_detail' pk=artist.id %}" class="item-card">
+            <div class="item-card-image">
+                {% if artist.image_url %}
+                    <img src="{{ artist.image_url }}" alt="{{ artist.name }}">
+                {% else %}
+                    🎤
+                {% endif %}
+            </div>
+            <div class="item-card-content">
+                <div class="item-card-title">{{ artist.name }}</div>
+                <div class="item-card-subtitle">
+                    {{ artist.song_count }} songs • {{ artist.album_count }} albums
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    {% if artists.has_other_pages %}
+    <div class="pagination">
+        {% if artists.has_previous %}
+            <a href="?page={{ artists.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">Previous</a>
+        {% endif %}
+
+        {% for num in artists.paginator.page_range %}
+            {% if artists.number == num %}
+                <span class="active">{{ num }}</span>
+            {% elif num > artists.number|add:'-3' and num < artists.number|add:'3' %}
+                <a href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if artists.has_next %}
+            <a href="?page={{ artists.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">Next</a>
+        {% endif %}
+    </div>
+    {% endif %}
+{% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">🎤</div>
+        <h3>No artists found</h3>
+        <p>Try adjusting your search</p>
+    </div>
+{% endif %}
+{% endblock %}

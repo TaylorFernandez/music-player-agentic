@@ -1,0 +1,120 @@
+{% extends "web/base.html" %} {% block title %}Music Player - Home{% endblock %}
+{% block nav_home %}active{% endblock %} {% block content %}
+<div class="page-header">
+    <h1>🎵 Welcome to Music Player</h1>
+    <p>Your personal music library, beautifully organized</p>
+</div>
+
+<div class="grid grid-4">
+    <div class="card">
+        <h3>📀 Songs</h3>
+        <p style="font-size: 2.5rem; font-weight: bold; color: #00d4ff">
+            {{ song_count }}
+        </p>
+        <p>Tracks in library</p>
+    </div>
+    <div class="card">
+        <h3>💿 Albums</h3>
+        <p style="font-size: 2.5rem; font-weight: bold; color: #c77dff">
+            {{ album_count }}
+        </p>
+        <p>Albums available</p>
+    </div>
+    <div class="card">
+        <h3>🎤 Artists</h3>
+        <p style="font-size: 2.5rem; font-weight: bold; color: #00d4ff">
+            {{ artist_count }}
+        </p>
+        <p>Artists cataloged</p>
+    </div>
+    <div class="card">
+        <h3>🎧 Features</h3>
+        <p style="font-size: 2.5rem; font-weight: bold; color: #c77dff">4</p>
+        <p>Core components</p>
+    </div>
+</div>
+
+{% if recent_songs %}
+<div class="card">
+    <h2>🆕 Recently Added Songs</h2>
+    <div class="grid grid-3">
+        {% for song in recent_songs %}
+        <a href="{% url 'web:song_detail' pk=song.id %}" class="item-card">
+            <div class="item-card-image">
+                {% if song.artwork_url %}
+                <img src="{{ song.artwork_url }}" alt="{{ song.title }}" />
+                {% else %} 🎵 {% endif %}
+            </div>
+            <div class="item-card-content">
+                <div class="item-card-title">{{ song.title }}</div>
+                <div class="item-card-subtitle">
+                    {% for artist in song.artists.all %}{{ artist.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %} {% if recent_albums %}
+<div class="card">
+    <h2>💿 Recently Added Albums</h2>
+    <div class="grid grid-3">
+        {% for album in recent_albums %}
+        <a href="{% url 'web:album_detail' pk=album.id %}" class="item-card">
+            <div class="item-card-image">
+                {% if album.cover_url %}
+                <img src="{{ album.cover_url }}" alt="{{ album.title }}" />
+                {% else %} 💿 {% endif %}
+            </div>
+            <div class="item-card-content">
+                <div class="item-card-title">{{ album.title }}</div>
+                <div class="item-card-subtitle">
+                    {% for artist in album.artists.all %}{{ artist.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <h2>🚀 Quick Actions</h2>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap">
+        <a href="{% url 'web:song_list' %}" class="btn btn-primary"
+            >Browse Songs</a
+        >
+        <a href="{% url 'web:album_list' %}" class="btn btn-secondary"
+            >Browse Albums</a
+        >
+        <a href="{% url 'web:artist_list' %}" class="btn btn-secondary"
+            >Browse Artists</a
+        >
+        {% if user.is_authenticated %}
+        <a href="{% url 'web:dashboard' %}" class="btn btn-primary"
+            >Go to Dashboard</a
+        >
+        {% else %}
+        <a href="{% url 'account_login' %}" class="btn btn-primary"
+            >Login to Get Started</a
+        >
+        {% endif %}
+    </div>
+</div>
+
+<div class="card">
+    <h2>📱 Mobile App</h2>
+    <p>
+        The Flutter mobile app is available! Connect to this backend to sync
+        your local music library with rich metadata from the cloud.
+    </p>
+    <p style="color: #a0a0a0; margin-top: 0.5rem">Features include:</p>
+    <ul style="color: #a0a0a0; margin-left: 1.5rem; margin-top: 0.5rem">
+        <li>ID3 tag extraction from local MP3 files</li>
+        <li>SHA-256 file hashing for song matching</li>
+        <li>Just Audio integration for playback</li>
+        <li>Queue management and playlist support</li>
+        <li>Sync with server database for enriched metadata</li>
+    </ul>
+</div>
+{% endblock %}

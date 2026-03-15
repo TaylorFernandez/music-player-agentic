@@ -1,0 +1,133 @@
+{% extends "web/base.html" %}
+
+{% block title %}Search Results - Music Player{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🔍 Search Results</h1>
+    <p>Searching for "{{ query }}"</p>
+</div>
+
+{% if query %}
+    {% if songs or albums or artists %}
+        <!-- Songs Results -->
+        {% if songs %}
+        <div class="card">
+            <h2>🎵 Songs ({{ songs|length }})</h2>
+            <div class="grid grid-4">
+                {% for song in songs %}
+                <a href="{% url 'web:song_detail' pk=song.id %}" class="item-card">
+                    <div class="item-card-image">
+                        {% if song.artwork_url %}
+                            <img src="{{ song.artwork_url }}" alt="{{ song.title }}">
+                        {% else %}
+                            🎵
+                        {% endif %}
+                    </div>
+                    <div class="item-card-content">
+                        <div class="item-card-title">{{ song.title }}</div>
+                        <div class="item-card-subtitle">
+                            {% for artist in song.artists.all %}{{ artist.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% if songs|length >= 10 %}
+            <div style="text-align: center; margin-top: 1rem;">
+                <a href="{% url 'web:song_list' %}?search={{ query }}" class="btn btn-secondary">View All Songs</a>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Albums Results -->
+        {% if albums %}
+        <div class="card">
+            <h2>💿 Albums ({{ albums|length }})</h2>
+            <div class="grid grid-4">
+                {% for album in albums %}
+                <a href="{% url 'web:album_detail' pk=album.id %}" class="item-card">
+                    <div class="item-card-image">
+                        {% if album.cover_url %}
+                            <img src="{{ album.cover_url }}" alt="{{ album.title }}">
+                        {% else %}
+                            💿
+                        {% endif %}
+                    </div>
+                    <div class="item-card-content">
+                        <div class="item-card-title">{{ album.title }}</div>
+                        <div class="item-card-subtitle">
+                            {% for artist in album.artists.all %}{{ artist.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% if albums|length >= 10 %}
+            <div style="text-align: center; margin-top: 1rem;">
+                <a href="{% url 'web:album_list' %}?search={{ query }}" class="btn btn-secondary">View All Albums</a>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Artists Results -->
+        {% if artists %}
+        <div class="card">
+            <h2>🎤 Artists ({{ artists|length }})</h2>
+            <div class="grid grid-4">
+                {% for artist in artists %}
+                <a href="{% url 'web:artist_detail' pk=artist.id %}" class="item-card">
+                    <div class="item-card-image">
+                        {% if artist.image_url %}
+                            <img src="{{ artist.image_url }}" alt="{{ artist.name }}">
+                        {% else %}
+                            🎤
+                        {% endif %}
+                    </div>
+                    <div class="item-card-content">
+                        <div class="item-card-title">{{ artist.name }}</div>
+                        <div class="item-card-subtitle">
+                            {{ artist.song_count }} songs • {{ artist.album_count }} albums
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% if artists|length >= 10 %}
+            <div style="text-align: center; margin-top: 1rem;">
+                <a href="{% url 'web:artist_list' %}?search={{ query }}" class="btn btn-secondary">View All Artists</a>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">🔍</div>
+            <h3>No results found</h3>
+            <p>No songs, albums, or artists match your search for "{{ query }}"</p>
+            <div style="margin-top: 1.5rem;">
+                <a href="{% url 'web:home' %}" class="btn btn-primary">Go Home</a>
+                <a href="{% url 'web:song_list' %}" class="btn btn-secondary">Browse Songs</a>
+            </div>
+        </div>
+    {% endif %}
+{% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">🔍</div>
+        <h3>Enter a search term</h3>
+        <p>Use the search box in the navigation bar to find songs, albums, and artists.</p>
+    </div>
+{% endif %}
+
+<div class="card" style="margin-top: 2rem;">
+    <h2>💡 Search Tips</h2>
+    <ul style="color: #a0a0a0; margin-left: 1.5rem; margin-top: 0.5rem;">
+        <li>Search across songs, albums, and artists simultaneously</li>
+        <li>Use specific keywords for better results</li>
+        <li>Results are limited to 10 per category - use category pages for more</li>
+        <li>Search is case-insensitive</li>
+    </ul>
+</div>
+{% endblock %}

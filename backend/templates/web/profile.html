@@ -1,0 +1,169 @@
+{% extends "web/base.html" %}
+
+{% block title %}Profile - Music Player{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>👤 Your Profile</h1>
+    <p>Manage your account settings</p>
+</div>
+
+<div class="grid grid-2">
+    <!-- User Information Card -->
+    <div class="card">
+        <h2>Account Information</h2>
+        <table>
+            <tr>
+                <td><strong>Username:</strong></td>
+                <td>{{ user.username }}</td>
+            </tr>
+            <tr>
+                <td><strong>Email:</strong></td>
+                <td>{{ user.email|default:"Not set" }}</td>
+            </tr>
+            <tr>
+                <td><strong>Role:</strong></td>
+                <td>
+                    <span class="badge badge-{{ user_profile.role }}">{{ user_profile.get_role_display }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Member Since:</strong></td>
+                <td>{{ user.date_joined|date:"F j, Y" }}</td>
+            </tr>
+            <tr>
+                <td><strong>Last Login:</strong></td>
+                <td>{{ user.last_login|date:"F j, Y H:i"|default:"Never" }}</td>
+            </tr>
+        </table>
+
+        {% if user_profile.avatar_url %}
+        <div style="margin-top: 1.5rem;">
+            <img src="{{ user_profile.avatar_url }}" alt="Avatar" style="width: 150px; height: 150px; border-radius: 12px; object-fit: cover;">
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Role Permissions Card -->
+    <div class="card">
+        <h2>🔒 Role & Permissions</h2>
+        <div style="margin-bottom: 1.5rem;">
+            <h3 style="color: #00d4ff;">Current Role: {{ user_profile.get_role_display }}</h3>
+            <p style="color: #a0a0a0; margin-top: 0.5rem;">
+                {% if user_profile.role == 'owner' %}
+                    You have full access to all features including direct editing and user management.
+                {% elif user_profile.role == 'moderator' %}
+                    You can review and approve/reject change requests from users.
+                {% else %}
+                    You can submit change requests for content moderation.
+                {% endif %}
+            </p>
+        </div>
+
+        <h3 style="color: #c77dff; margin-bottom: 0.5rem;">Your Permissions:</h3>
+        <ul style="color: #a0a0a0; margin-left: 1.5rem;">
+            <li>✅ Browse songs, albums, and artists</li>
+            <li>✅ Submit change requests</li>
+            <li>✅ View your own change request history</li>
+            {% if user_profile.can_moderate %}
+            <li>✅ Review and moderate change requests</li>
+            <li>✅ Approve or reject user submissions</li>
+            {% endif %}
+            {% if user_profile.role == 'owner' %}
+            <li>✅ Edit content directly without moderation</li>
+            <li>✅ Manage user roles and permissions</li>
+            <li>✅ Full administrative access</li>
+            {% endif %}
+        </ul>
+    </div>
+</div>
+
+{% if user_profile.role == 'owner' %}
+<!-- Role Management (Owners Only) -->
+<div class="card" style="background: rgba(123, 44, 191, 0.1); border-color: rgba(123, 44, 191, 0.3);">
+    <h2>👑 Role Management</h2>
+    <p style="color: #a0a0a0; margin-bottom: 1rem;">As an owner, you can change your display role for testing purposes.</p>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="role">Change Role</label>
+            <select id="role" name="role">
+                {% for role_val, role_label in user_profile.ROLE_CHOICES %}
+                    <option value="{{ role_val }}" {% if user_profile.role == role_val %}selected{% endif %}>
+                        {{ role_label }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Update Role</button>
+    </form>
+</div>
+{% endif %}
+
+<!-- Recent Change Requests -->
+<div class="card">
+    <h2>📝 Your Recent Change Requests</h2>
+    <p style="color: #a0a0a0; margin-bottom: 1rem;">Track the status of your submitted change requests</p>
+
+    {% if my_requests %}
+    <table>
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Field</th>
+                <th>New Value</th>
+                <th>Status</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for request in my_requests %}
+            <tr>
+                <td>{{ request.get_model_type_display }}</td>
+                <td><strong>{{ request.field_name|title }}</strong></td>
+                <td>{{ request.new_value|truncatechars:30 }}</td>
+                <td>
+                    <span class="badge badge-{{ request.status }}">{{ request.get_status_display }}</span>
+                </td>
+                <td>{{ request.created_at|date:"M j, Y" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">📝</div>
+        <p>You haven't submitted any change requests yet.</p>
+        <p style="margin-top: 0.5rem;">
+            <a href="{% url 'web:song_list' %}" class="btn btn-secondary" style="margin-top: 1rem;">Browse Songs to Get Started</a>
+        </p>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Quick Actions -->
+<div class="card">
+    <h2>⚡ Quick Actions</h2>
+    <div class="grid grid-4" style="margin-top: 1rem;">
+        <a href="{% url 'web:dashboard' %}" class="btn btn-secondary">📊 Dashboard</a>
+        <a href="{% url 'web:song_list' %}" class="btn btn-secondary">🎵 Browse Songs</a>
+        <a href="{% url 'web:album_list' %}" class="btn btn-secondary">💿 Browse Albums</a>
+        <a href="{% url 'web:artist_list' %}" class="btn btn-secondary">🎤 Browse Artists</a>
+        {% if user_profile.can_moderate %}
+        <a href="{% url 'web:change_request_list' %}" class="btn btn-primary">🔍 Moderation Queue</a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Account Settings -->
+<div class="card">
+    <h2>⚙️ Account Settings</h2>
+    <p style="color: #a0a0a0; margin-bottom: 1rem;">Manage your account through Django Allauth</p>
+    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <a href="{% url 'account_email' %}" class="btn btn-secondary">📧 Manage Email</a>
+        <a href="{% url 'account_change_password' %}" class="btn btn-secondary">🔑 Change Password</a>
+        <a href="{% url 'account_logout' %}" class="btn btn-danger">🚪 Logout</a>
+    </div>
+</div>
+{% endblock %}

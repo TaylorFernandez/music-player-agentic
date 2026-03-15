@@ -1,0 +1,190 @@
+{% extends "web/base.html" %}
+
+{% block title %}Review Change Request - Music Player{% endblock %}
+{% block nav_moderation %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🔍 Review Change Request</h1>
+    <p>Review and approve or reject this proposed change</p>
+</div>
+
+<div class="card">
+    <h2>Request Details</h2>
+    <table>
+        <tr>
+            <td><strong>Request ID:</strong></td>
+            <td>#{{ change_request.id }}</td>
+        </tr>
+        <tr>
+            <td><strong>Model Type:</strong></td>
+            <td>
+                <span class="badge">{{ change_request.get_model_type_display }}</span>
+            </td>
+        </tr>
+        <tr>
+            <td><strong>Field to Change:</strong></td>
+            <td><strong>{{ change_request.field_name|title }}</strong></td>
+        </tr>
+        <tr>
+            <td><strong>Requested By:</strong></td>
+            <td>{{ change_request.user.username }} ({{ change_request.user.email }})</td>
+        </tr>
+        <tr>
+            <td><strong>Requested On:</strong></td>
+            <td>{{ change_request.created_at|date:"F j, Y H:i" }}</td>
+        </tr>
+        <tr>
+            <td><strong>Status:</strong></td>
+            <td>
+                <span class="badge badge-{{ change_request.status }}">{{ change_request.get_status_display }}</span>
+            </td>
+        </tr>
+    </table>
+</div>
+
+<div class="grid grid-2">
+    <div class="card" style="background: rgba(244, 67, 54, 0.1); border-color: rgba(244, 67, 54, 0.3);">
+        <h3 style="color: #e57373;">Old Value</h3>
+        <div style="background: rgba(0, 0, 0, 0.3); padding: 1rem; border-radius: 8px; white-space: pre-wrap; word-break: break-word;">
+            {% if change_request.old_value %}
+                {{ change_request.old_value }}
+            {% else %}
+                <em style="color: #a0a0a0;">No previous value (new entry)</em>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card" style="background: rgba(76, 175, 80, 0.1); border-color: rgba(76, 175, 80, 0.3);">
+        <h3 style="color: #81c784;">New Value</h3>
+        <div style="background: rgba(0, 0, 0, 0.3); padding: 1rem; border-radius: 8px; white-space: pre-wrap; word-break: break-word;">
+            {{ change_request.new_value }}
+        </div>
+    </div>
+</div>
+
+{% if change_request.notes %}
+<div class="card">
+    <h2>📝 Requester Notes</h2>
+    <div style="background: rgba(0, 0, 0, 0.3); padding: 1rem; border-radius: 8px; white-space: pre-wrap;">
+        {{ change_request.notes }}
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <h2>Related Object</h2>
+    {% if change_request.model_id == 0 %}
+        <p style="color: #ffb74d;"><strong>⚠️ This is a request to create a new {{ change_request.model_type }}.</strong></p>
+        <p style="color: #a0a0a0;">No existing object to display.</p>
+    {% elif change_request.model_type == "song" %}
+        {% if change_request.get_target_object %}
+            <table>
+                <tr>
+                    <td><strong>Title:</strong></td>
+                    <td>{{ change_request.get_target_object.title }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Duration:</strong></td>
+                    <td>{{ change_request.get_target_object.formatted_duration }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Artists:</strong></td>
+                    <td>
+                        {% for artist in change_request.get_target_object.artists.all %}
+                            {{ artist.name }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </td>
+                </tr>
+            </table>
+            <div style="margin-top: 1rem;">
+                <a href="{% url 'web:song_detail' pk=change_request.model_id %}" class="btn btn-secondary btn-sm">View Song</a>
+            </div>
+        {% else %}
+            <p style="color: #e57373;">Object no longer exists (may have been deleted).</p>
+        {% endif %}
+    {% elif change_request.model_type == "album" %}
+        {% if change_request.get_target_object %}
+            <table>
+                <tr>
+                    <td><strong>Title:</strong></td>
+                    <td>{{ change_request.get_target_object.title }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Type:</strong></td>
+                    <td>{{ change_request.get_target_object.get_album_type_display }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Artists:</strong></td>
+                    <td>
+                        {% for artist in change_request.get_target_object.artists.all %}
+                            {{ artist.name }}{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </td>
+                </tr>
+            </table>
+            <div style="margin-top: 1rem;">
+                <a href="{% url 'web:album_detail' pk=change_request.model_id %}" class="btn btn-secondary btn-sm">View Album</a>
+            </div>
+        {% else %}
+            <p style="color: #e57373;">Object no longer exists (may have been deleted).</p>
+        {% endif %}
+    {% elif change_request.model_type == "artist" %}
+        {% if change_request.get_target_object %}
+            <table>
+                <tr>
+                    <td><strong>Name:</strong></td>
+                    <td>{{ change_request.get_target_object.name }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Albums:</strong></td>
+                    <td>{{ change_request.get_target_object.albums.count }}</td>
+                </tr>
+                <tr>
+                    <td><strong>Songs:</strong></td>
+                    <td>{{ change_request.get_target_object.songs.count }}</td>
+                </tr>
+            </table>
+            <div style="margin-top: 1rem;">
+                <a href="{% url 'web:artist_detail' pk=change_request.model_id %}" class="btn btn-secondary btn-sm">View Artist</a>
+            </div>
+        {% else %}
+            <p style="color: #e57373;">Object no longer exists (may have been deleted).</p>
+        {% endif %}
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>Take Action</h2>
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label for="notes">Review Notes (Optional)</label>
+            <textarea id="notes" name="notes" rows="4" placeholder="Add notes about your decision (will be visible to the requester)..."></textarea>
+        </div>
+
+        <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+            <button type="submit" name="action" value="approve" class="btn btn-success" onclick="return confirm('Are you sure you want to approve this change request?');">
+                ✓ Approve Change
+            </button>
+            <button type="submit" name="action" value="reject" class="btn btn-danger" onclick="return confirm('Are you sure you want to reject this change request?');">
+                ✗ Reject Change
+            </button>
+            <a href="{% url 'web:change_request_list' %}" class="btn btn-secondary">← Back to List</a>
+        </div>
+    </form>
+</div>
+
+<div class="card" style="background: rgba(255, 152, 0, 0.1); border-color: rgba(255, 152, 0, 0.3);">
+    <h3 style="color: #ffb74d;">⚠️ Review Guidelines</h3>
+    <ul style="color: #a0a0a0; margin-left: 1.5rem; margin-top: 0.5rem;">
+        <li>Verify that the proposed change is accurate and appropriate</li>
+        <li>Check for spelling and formatting issues in the new value</li>
+        <li>Consider if the change maintains data consistency</li>
+        <li>For new entries, verify that similar entries don't already exist</li>
+        <li>Provide clear feedback in the notes when rejecting</li>
+        <li>Approved changes will be applied immediately to the database</li>
+    </ul>
+</div>
+{% endblock %}

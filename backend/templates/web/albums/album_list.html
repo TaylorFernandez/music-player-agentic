@@ -1,0 +1,108 @@
+{% extends "web/base.html" %}
+
+{% block title %}Albums - Music Player{% endblock %}
+{% block nav_albums %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>💿 Albums</h1>
+    <p>Browse and discover albums in your library</p>
+</div>
+
+<div class="filter-bar">
+    <form method="get" class="filter-bar" style="background: none; border: none; padding: 0; margin: 0; width: 100%;">
+        <div style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; width: 100%;">
+            <div class="filter-group" style="flex: 2; min-width: 200px;">
+                <label for="search">Search</label>
+                <input type="text" id="search" name="search" value="{{ search }}" placeholder="Search albums...">
+            </div>
+
+            <div class="filter-group" style="flex: 1; min-width: 150px;">
+                <label for="artist">Artist</label>
+                <select id="artist" name="artist">
+                    <option value="">All Artists</option>
+                    {% for artist in artists %}
+                        <option value="{{ artist.id }}" {% if selected_artist == artist.id|stringformat:"s" %}selected{% endif %}>
+                            {{ artist.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group" style="flex: 1; min-width: 120px;">
+                <label for="type">Type</label>
+                <select id="type" name="type">
+                    <option value="">All Types</option>
+                    {% for type_val, type_label in album_types %}
+                        <option value="{{ type_val }}" {% if selected_type == type_val %}selected{% endif %}>
+                            {{ type_label }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="filter-group" style="flex: 1; min-width: 120px;">
+                <label for="sort">Sort By</label>
+                <select id="sort" name="sort">
+                    <option value="title" {% if sort == 'title' %}selected{% endif %}>Title (A-Z)</option>
+                    <option value="date" {% if sort == 'date' %}selected{% endif %}>Release Date</option>
+                    <option value="created" {% if sort == 'created' %}selected{% endif %}>Recently Added</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Filter</button>
+            <a href="{% url 'web:album_list' %}" class="btn btn-secondary">Clear</a>
+        </div>
+    </form>
+</div>
+
+{% if albums %}
+    <div class="grid grid-4">
+        {% for album in albums %}
+        <a href="{% url 'web:album_detail' pk=album.id %}" class="item-card">
+            <div class="item-card-image">
+                {% if album.cover_url %}
+                    <img src="{{ album.cover_url }}" alt="{{ album.title }}">
+                {% else %}
+                    💿
+                {% endif %}
+            </div>
+            <div class="item-card-content">
+                <div class="item-card-title">{{ album.title }}</div>
+                <div class="item-card-subtitle">
+                    {% for artist in album.artists.all %}{{ artist.name }}{% if not forloop.last %}, {% endif %}{% empty %}Unknown Artist{% endfor %}
+                    <br>
+                    <small>{{ album.get_album_type_display }}{% if album.release_date %} • {{ album.release_date|date:"Y" }}{% endif %}</small>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+
+    {% if albums.has_other_pages %}
+    <div class="pagination">
+        {% if albums.has_previous %}
+            <a href="?page={{ albums.previous_page_number }}{% if search %}&search={{ search }}{% endif %}{% if selected_artist %}&artist={{ selected_artist }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">Previous</a>
+        {% endif %}
+
+        {% for num in albums.paginator.page_range %}
+            {% if albums.number == num %}
+                <span class="active">{{ num }}</span>
+            {% elif num > albums.number|add:'-3' and num < albums.number|add:'3' %}
+                <a href="?page={{ num }}{% if search %}&search={{ search }}{% endif %}{% if selected_artist %}&artist={{ selected_artist }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">{{ num }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if albums.has_next %}
+            <a href="?page={{ albums.next_page_number }}{% if search %}&search={{ search }}{% endif %}{% if selected_artist %}&artist={{ selected_artist }}{% endif %}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if sort %}&sort={{ sort }}{% endif %}">Next</a>
+        {% endif %}
+    </div>
+    {% endif %}
+{% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">💿</div>
+        <h3>No albums found</h3>
+        <p>Try adjusting your search or filters</p>
+    </div>
+{% endif %}
+{% endblock %}

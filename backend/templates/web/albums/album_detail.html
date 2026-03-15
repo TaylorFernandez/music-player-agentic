@@ -1,0 +1,140 @@
+{% extends "web/base.html" %}
+
+{% block title %}{{ album.title }} - Music Player{% endblock %}
+{% block nav_albums %}active{% endblock %}
+
+{% block content %}
+<div class="detail-header">
+    <div class="detail-image">
+        {% if album.cover_url %}
+            <img src="{{ album.cover_url }}" alt="{{ album.title }}">
+        {% else %}
+            💿
+        {% endif %}
+    </div>
+
+    <div class="detail-info">
+        <h1>{{ album.title }}</h1>
+
+        <div class="detail-meta">
+            <p>
+                <strong>Artists:</strong>
+                {% for artist in album.artists.all %}
+                    <a href="{% url 'web:artist_detail' pk=artist.id %}">{{ artist.name }}</a>{% if not forloop.last %}, {% endif %}
+                {% empty %}
+                    Unknown Artist
+                {% endfor %}
+            </p>
+
+            <p><strong>Type:</strong> {{ album.get_album_type_display }}</p>
+
+            {% if album.release_date %}
+            <p><strong>Released:</strong> {{ album.release_date|date:"F j, Y" }}</p>
+            {% endif %}
+
+            <p><strong>Tracks:</strong> {{ album.song_count }}</p>
+            <p><strong>Added:</strong> {{ album.created_at|date:"F j, Y" }}</p>
+        </div>
+
+        <div class="detail-actions">
+            <a href="#" class="btn btn-primary" onclick="alert('Play functionality coming soon!'); return false;">▶ Play Album</a>
+            <a href="{% url 'web:album_list' %}" class="btn btn-secondary">← Back to Albums</a>
+        </div>
+    </div>
+</div>
+
+{% if album.description %}
+<div class="card">
+    <h2>📝 Description</h2>
+    <div style="white-space: pre-wrap; line-height: 1.8; color: #c0c0c0;">{{ album.description }}</div>
+</div>
+{% endif %}
+
+<div class="card">
+    <h2>🎵 Track Listing</h2>
+    {% if songs %}
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 60px;">#</th>
+                    <th>Title</th>
+                    <th>Artists</th>
+                    <th style="width: 100px;">Duration</th>
+                    <th style="width: 80px;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for song in songs %}
+                <tr>
+                    <td style="color: #a0a0a0;">{{ song.songalbum.track_number|default:"-" }}</td>
+                    <td>
+                        <a href="{% url 'web:song_detail' pk=song.id %}" style="color: #00d4ff; text-decoration: none;">
+                            {{ song.title }}
+                        </a>
+                    </td>
+                    <td>
+                        {% for artist in song.artists.all %}
+                            <a href="{% url 'web:artist_detail' pk=artist.id %}" style="color: #c77dff; text-decoration: none;">
+                                {{ artist.name }}
+                            </a>{% if not forloop.last %}, {% endif %}
+                        {% endfor %}
+                    </td>
+                    <td style="color: #a0a0a0;">{{ song.formatted_duration }}</td>
+                    <td>
+                        <a href="{% url 'web:song_detail' pk=song.id %}" class="btn btn-secondary btn-sm">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-state-icon">🎵</div>
+            <p>No tracks in this album yet.</p>
+        </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>ℹ️ Album Information</h2>
+    <table>
+        <tr>
+            <td><strong>Album Type:</strong></td>
+            <td>{{ album.get_album_type_display }}</td>
+        </tr>
+        <tr>
+            <td><strong>Release Date:</strong></td>
+            <td>{{ album.release_date|date:"F j, Y"|default:"Unknown" }}</td>
+        </tr>
+        <tr>
+            <td><strong>Total Tracks:</strong></td>
+            <td>{{ album.song_count }}</td>
+        </tr>
+        <tr>
+            <td><strong>Last Updated:</strong></td>
+            <td>{{ album.updated_at|date:"F j, Y H:i" }}</td>
+        </tr>
+    </table>
+</div>
+
+<div class="card">
+    <h2>🔗 Related Artists</h2>
+    <div class="grid grid-4">
+        {% for artist in album.artists.all %}
+        <a href="{% url 'web:artist_detail' pk=artist.id %}" class="item-card">
+            <div class="item-card-image">
+                {% if artist.image_url %}
+                    <img src="{{ artist.image_url }}" alt="{{ artist.name }}">
+                {% else %}
+                    🎤
+                {% endif %}
+            </div>
+            <div class="item-card-content">
+                <div class="item-card-title">{{ artist.name }}</div>
+                <div class="item-card-subtitle">Artist</div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
