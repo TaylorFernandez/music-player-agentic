@@ -35,11 +35,6 @@ class Artist(models.Model):
         """Returns the number of albums by this artist."""
         return self.albums.count()
 
-    @property
-    def can_moderate(self):
-        """Returns True if user can moderate content."""
-        return self.role in ["moderator", "owner"]
-
 
 class Album(models.Model):
     """Represents a music album, EP, or single."""

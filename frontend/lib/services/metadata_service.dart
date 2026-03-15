@@ -72,7 +72,7 @@ class ExtractedMetadata {
 
   @override
   String toString() {
-    return 'ExtractedMetadata(title: $title, artist: $artist, album: $album, duration: ${formattedDuration})';
+    return 'ExtractedMetadata(title: $title, artist: $artist, album: $album, duration: $formattedDuration)';
   }
 }
 
@@ -80,7 +80,14 @@ class ExtractedMetadata {
 /// Parses ID3 tags from MP3 files to extract song information.
 class MetadataService {
   /// Supported audio file extensions
-  static const supportedExtensions = ['.mp3', '.m4a', '.flac', '.wav', '.ogg', '.aac'];
+  static const supportedExtensions = [
+    '.mp3',
+    '.m4a',
+    '.flac',
+    '.wav',
+    '.ogg',
+    '.aac'
+  ];
 
   /// Check if a file is a supported audio file
   bool isSupportedAudioFile(String filePath) {
@@ -121,7 +128,8 @@ class MetadataService {
     } catch (e) {
       // Fallback: hash file path and modification time
       final stat = await file.stat();
-      final fallbackInput = '${file.path}:${stat.size}:${stat.modified.millisecondsSinceEpoch}';
+      final fallbackInput =
+          '${file.path}:${stat.size}:${stat.modified.millisecondsSinceEpoch}';
       return sha256.convert(fallbackInput.codeUnits).toString();
     }
   }
@@ -192,7 +200,8 @@ class MetadataService {
   }
 
   /// Extract metadata from multiple files
-  Future<List<ExtractedMetadata>> extractMetadataFromFiles(List<File> files) async {
+  Future<List<ExtractedMetadata>> extractMetadataFromFiles(
+      List<File> files) async {
     final results = <ExtractedMetadata>[];
 
     for (final file in files) {
@@ -372,7 +381,10 @@ class MetadataService {
 
       // Check for ID3v2 header
       if (bytes.length >= 10 &&
-          bytes[0] == 0x49 && bytes[1] == 0x44 && bytes[2] == 0x33) { // "ID3"
+          bytes[0] == 0x49 &&
+          bytes[1] == 0x44 &&
+          bytes[2] == 0x33) {
+        // "ID3"
         final id3Data = _parseId3v2(bytes);
         result.addAll(id3Data);
       }
@@ -382,7 +394,8 @@ class MetadataService {
         final id3v1Start = bytes.length - 128;
         if (bytes[id3v1Start] == 0x54 &&
             bytes[id3v1Start + 1] == 0x41 &&
-            bytes[id3v1Start + 2] == 0x47) { // "TAG"
+            bytes[id3v1Start + 2] == 0x47) {
+          // "TAG"
           final id3v1Data = _parseId3v1(bytes.sublist(id3v1Start));
           // ID3v2 takes precedence, so only add if not already set
           for (final entry in id3v1Data.entries) {
@@ -457,7 +470,9 @@ class MetadataService {
         }
 
         // Check for valid frame ID
-        if (frameId.startsWith('\x00') || frameSize <= 0 || frameSize > bytes.length) {
+        if (frameId.startsWith('\x00') ||
+            frameSize <= 0 ||
+            frameSize > bytes.length) {
           break;
         }
 
@@ -481,7 +496,8 @@ class MetadataService {
   }
 
   /// Parse individual ID3v2 frame
-  void _parseFrame(String frameId, Uint8List frameData, Map<String, dynamic> result, int version) {
+  void _parseFrame(String frameId, Uint8List frameData,
+      Map<String, dynamic> result, int version) {
     try {
       String? text;
 
@@ -671,32 +687,154 @@ class MetadataService {
   /// Get standard ID3v1 genre list
   List<String> _getGenreList() {
     return [
-      'Blues', 'Classic Rock', 'Country', 'Dance', 'Disco', 'Funk', 'Grunge',
-      'Hip-Hop', 'Jazz', 'Metal', 'New Age', 'Oldies', 'Other', 'Pop', 'R&B',
-      'Rap', 'Reggae', 'Rock', 'Techno', 'Industrial', 'Alternative', 'Ska',
-      'Death Metal', 'Pranks', 'Soundtrack', 'Euro-Techno', 'Ambient',
-      'Trip-Hop', 'Vocal', 'Jazz+Funk', 'Fusion', 'Trance', 'Classical',
-      'Instrumental', 'Acid', 'House', 'Game', 'Sound Clip', 'Gospel',
-      'Noise', 'AlternRock', 'Bass', 'Soul', 'Punk', 'Space', 'Meditative',
-      'Instrumental Pop', 'Instrumental Rock', 'Ethnic', 'Gothic', 'Darkwave',
-      'Techno-Industrial', 'Electronic', 'Pop-Folk', 'Eurodance', 'Dream',
-      'Southern Rock', 'Comedy', 'Cult', 'Gangsta', 'Top 40', 'Christian Rap',
-      'Pop/Funk', 'Jungle', 'Native American', 'Cabaret', 'New Wave',
-      'Psychadelic', 'Rave', 'Showtunes', 'Trailer', 'Lo-Fi', 'Tribal',
-      'Acid Punk', 'Acid Jazz', 'Polka', 'Retro', 'Musical', 'Rock & Roll',
-      'Hard Rock', 'Folk', 'Folk-Rock', 'National Folk', 'Swing', 'Fast Fusion',
-      'Bebob', 'Latin', 'Revival', 'Celtic', 'Bluegrass', 'Avantgarde',
-      'Gothic Rock', 'Progressive Rock', 'Psychedelic Rock', 'Symphonic Rock',
-      'Slow Rock', 'Big Band', 'Chorus', 'Easy Listening', 'Acoustic', 'Humour',
-      'Speech', 'Chanson', 'Opera', 'Chamber Music', 'Sonata', 'Symphony',
-      'Booty Bass', 'Primus', 'Porn Groove', 'Satire', 'Slow Jam', 'Club',
-      'Tango', 'Samba', 'Folklore', 'Ballad', 'Power Ballad', 'Rhythmic Soul',
-      'Freestyle', 'Duet', 'Punk Rock', 'Drum Solo', 'A capella', 'Euro-House',
-      'Dance Hall', 'Goa', 'Drum & Bass', 'Club-House', 'Hardcore Techno',
-      'Terror', 'Indie', 'BritPop', 'Negerpunk', 'Polsk Punk', 'Beat',
-      'Christian Gangsta Rap', 'Heavy Metal', 'Black Metal', 'Crossover',
-      'Contemporary Christian', 'Christian Rock', 'Merengue', 'Salsa',
-      'Thrash Metal', 'Anime', 'JPop', 'Synthpop',
+      'Blues',
+      'Classic Rock',
+      'Country',
+      'Dance',
+      'Disco',
+      'Funk',
+      'Grunge',
+      'Hip-Hop',
+      'Jazz',
+      'Metal',
+      'New Age',
+      'Oldies',
+      'Other',
+      'Pop',
+      'R&B',
+      'Rap',
+      'Reggae',
+      'Rock',
+      'Techno',
+      'Industrial',
+      'Alternative',
+      'Ska',
+      'Death Metal',
+      'Pranks',
+      'Soundtrack',
+      'Euro-Techno',
+      'Ambient',
+      'Trip-Hop',
+      'Vocal',
+      'Jazz+Funk',
+      'Fusion',
+      'Trance',
+      'Classical',
+      'Instrumental',
+      'Acid',
+      'House',
+      'Game',
+      'Sound Clip',
+      'Gospel',
+      'Noise',
+      'AlternRock',
+      'Bass',
+      'Soul',
+      'Punk',
+      'Space',
+      'Meditative',
+      'Instrumental Pop',
+      'Instrumental Rock',
+      'Ethnic',
+      'Gothic',
+      'Darkwave',
+      'Techno-Industrial',
+      'Electronic',
+      'Pop-Folk',
+      'Eurodance',
+      'Dream',
+      'Southern Rock',
+      'Comedy',
+      'Cult',
+      'Gangsta',
+      'Top 40',
+      'Christian Rap',
+      'Pop/Funk',
+      'Jungle',
+      'Native American',
+      'Cabaret',
+      'New Wave',
+      'Psychadelic',
+      'Rave',
+      'Showtunes',
+      'Trailer',
+      'Lo-Fi',
+      'Tribal',
+      'Acid Punk',
+      'Acid Jazz',
+      'Polka',
+      'Retro',
+      'Musical',
+      'Rock & Roll',
+      'Hard Rock',
+      'Folk',
+      'Folk-Rock',
+      'National Folk',
+      'Swing',
+      'Fast Fusion',
+      'Bebob',
+      'Latin',
+      'Revival',
+      'Celtic',
+      'Bluegrass',
+      'Avantgarde',
+      'Gothic Rock',
+      'Progressive Rock',
+      'Psychedelic Rock',
+      'Symphonic Rock',
+      'Slow Rock',
+      'Big Band',
+      'Chorus',
+      'Easy Listening',
+      'Acoustic',
+      'Humour',
+      'Speech',
+      'Chanson',
+      'Opera',
+      'Chamber Music',
+      'Sonata',
+      'Symphony',
+      'Booty Bass',
+      'Primus',
+      'Porn Groove',
+      'Satire',
+      'Slow Jam',
+      'Club',
+      'Tango',
+      'Samba',
+      'Folklore',
+      'Ballad',
+      'Power Ballad',
+      'Rhythmic Soul',
+      'Freestyle',
+      'Duet',
+      'Punk Rock',
+      'Drum Solo',
+      'A capella',
+      'Euro-House',
+      'Dance Hall',
+      'Goa',
+      'Drum & Bass',
+      'Club-House',
+      'Hardcore Techno',
+      'Terror',
+      'Indie',
+      'BritPop',
+      'Negerpunk',
+      'Polsk Punk',
+      'Beat',
+      'Christian Gangsta Rap',
+      'Heavy Metal',
+      'Black Metal',
+      'Crossover',
+      'Contemporary Christian',
+      'Christian Rock',
+      'Merengue',
+      'Salsa',
+      'Thrash Metal',
+      'Anime',
+      'JPop',
+      'Synthpop',
     ];
   }
 
@@ -705,7 +843,7 @@ class MetadataService {
     try {
       // Estimate based on common bitrates (128kbps = ~16KB/s)
       // This is a rough estimate - actual duration should come from proper parsing
-      final bitrateBytesPerSecond = 128 * 1024 / 8;
+      const bitrateBytesPerSecond = 128 * 1024 / 8;
       final estimatedDuration = (fileSize / bitrateBytesPerSecond).round();
       return estimatedDuration > 0 ? estimatedDuration : null;
     } catch (e) {
@@ -732,7 +870,8 @@ class MetadataService {
     if (normalizedA.isEmpty || normalizedB.isEmpty) return 0.0;
 
     // Check if one contains the other
-    if (normalizedA.contains(normalizedB) || normalizedB.contains(normalizedA)) {
+    if (normalizedA.contains(normalizedB) ||
+        normalizedB.contains(normalizedA)) {
       return 0.8;
     }
 

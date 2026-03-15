@@ -13,6 +13,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views.generic import (
     CreateView,
     DeleteView,
@@ -453,16 +454,18 @@ def change_request_review(request, pk):
                         obj.save()
 
             change_request.status = "approved"
-            change_request.reviewer = request.user
-            change_request.review_notes = notes
+            change_request.reviewed_by = request.user
+            change_request.reviewed_at = timezone.now()
+            change_request.notes = notes
             change_request.save()
 
             messages.success(request, "Change request approved!")
 
         elif action == "reject":
             change_request.status = "rejected"
-            change_request.reviewer = request.user
-            change_request.review_notes = notes
+            change_request.reviewed_by = request.user
+            change_request.reviewed_at = timezone.now()
+            change_request.notes = notes
             change_request.save()
 
             messages.info(request, "Change request rejected.")

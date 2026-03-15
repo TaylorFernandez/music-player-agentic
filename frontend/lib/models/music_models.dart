@@ -1,11 +1,10 @@
-
-
 /// Model class representing an Album in the music player.
 /// Matches the backend Album model structure.
 class Album {
   final int id;
   final String title;
-  final String albumType; // 'album', 'ep', 'single', 'compilation', 'soundtrack'
+  final String
+      albumType; // 'album', 'ep', 'single', 'compilation', 'soundtrack'
   final DateTime? releaseDate;
   final String? coverUrl;
   final String? description;
@@ -61,7 +60,8 @@ class Album {
       coverUrl: json['cover_url'] as String?,
       description: json['description'] as String?,
       artists: (json['artists'] as List<dynamic>?)
-              ?.map((artist) => AlbumArtist.fromJson(artist as Map<String, dynamic>))
+              ?.map((artist) =>
+                  AlbumArtist.fromJson(artist as Map<String, dynamic>))
               .toList() ??
           [],
       songCount: json['song_count'] as int? ?? 0,
@@ -255,26 +255,17 @@ class ArtistDetail extends Artist {
   final List<SimpleSong> songs;
 
   ArtistDetail({
-    required int id,
-    required String name,
-    String? imageUrl,
-    String? bio,
-    int songCount = 0,
-    int albumCount = 0,
-    required DateTime createdAt,
-    required DateTime updatedAt,
+    required super.id,
+    required super.name,
+    super.imageUrl,
+    super.bio,
+    super.songCount,
+    super.albumCount,
+    required super.createdAt,
+    required super.updatedAt,
     this.albums = const [],
     this.songs = const [],
-  }) : super(
-          id: id,
-          name: name,
-          imageUrl: imageUrl,
-          bio: bio,
-          songCount: songCount,
-          albumCount: albumCount,
-          createdAt: createdAt,
-          updatedAt: updatedAt,
-        );
+  });
 
   factory ArtistDetail.fromJson(Map<String, dynamic> json) {
     final artist = Artist.fromJson(json);

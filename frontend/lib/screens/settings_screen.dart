@@ -44,6 +44,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Navigator.pop(context);
               final authProvider = context.read<AuthProvider>();
               await authProvider.logout();
+              // Use a local reference to ScaffoldMessenger to avoid async context issues
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Logged out successfully')),
@@ -289,7 +290,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                    color:
+                        Theme.of(context).colorScheme.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(

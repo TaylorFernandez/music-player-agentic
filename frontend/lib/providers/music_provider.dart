@@ -31,7 +31,7 @@ class MusicProvider extends ChangeNotifier {
   Song? _currentSong;
   LocalTrack? _currentLocalTrack;
   List<Song> _playlist = [];
-  List<LocalTrack> _localPlaylist = [];
+  final List<LocalTrack> _localPlaylist = [];
   int _currentIndex = -1;
   bool _isPlaying = false;
   bool _shuffle = false;

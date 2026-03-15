@@ -108,7 +108,7 @@ class AppTheme {
         foregroundColor: Colors.white,
         elevation: 4,
       ),
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         type: BottomNavigationBarType.fixed,
         backgroundColor: Colors.white,
         selectedItemColor: primaryColor,
@@ -135,7 +135,8 @@ class AppTheme {
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: primaryColor, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: surfaceLight,
@@ -215,7 +216,7 @@ class AppTheme {
         foregroundColor: Colors.white,
         elevation: 4,
       ),
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         type: BottomNavigationBarType.fixed,
         backgroundColor: surfaceDark,
         selectedItemColor: primaryColor,
@@ -242,7 +243,8 @@ class AppTheme {
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: primaryColor, width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       ),
       chipTheme: ChipThemeData(
         backgroundColor: surfaceDark,
@@ -271,7 +273,8 @@ class AppTheme {
 
   static TextTheme _buildTextTheme({required bool isDark}) {
     final Color textColor = isDark ? textPrimaryDark : textPrimaryLight;
-    final Color secondaryColor = isDark ? textSecondaryDark : textSecondaryLight;
+    final Color secondaryColor =
+        isDark ? textSecondaryDark : textSecondaryLight;
 
     return TextTheme(
       displayLarge: TextStyle(
