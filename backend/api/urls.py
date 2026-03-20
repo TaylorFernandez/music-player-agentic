@@ -15,6 +15,7 @@ from .views import (
     LogoutView,
     RegisterView,
     SongViewSet,
+    UserSongViewSet,
     UserViewSet,
 )
 
@@ -29,6 +30,7 @@ router.register(
     r"moderation/change-requests", ChangeRequestViewSet, basename="change-request"
 )
 router.register(r"users", UserViewSet, basename="user")
+router.register(r"library", UserSongViewSet, basename="user-song")
 
 # URL patterns
 urlpatterns = [

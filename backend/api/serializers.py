@@ -12,6 +12,7 @@ from core.models import (
     SongAlbum,
     SongArtist,
     UserProfile,
+    UserSong,
 )
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
@@ -77,6 +78,37 @@ class UserRegistrationSerializer(serializers.Serializer):
         )
         UserProfile.objects.create(user=user, role="general")
         return user
+
+
+class UserSongSerializer(serializers.ModelSerializer):
+    """Serializer for UserSong model."""
+
+    song_details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserSong
+        fields = ["id", "user", "song", "song_details", "added_at", "is_favorite"]
+        read_only_fields = ["id", "user", "added_at"]
+
+    def get_song_details(self, obj):
+        """Return song details using SongSerializer."""
+        return SongSerializer(obj.song).data
+
+
+class LibrarySyncSerializer(serializers.Serializer):
+    """Serializer for library synchronization."""
+
+    song_ids = serializers.ListField(child=serializers.IntegerField())
+
+    def validate_song_ids(self, value):
+        """Check if songs exist."""
+        existing_ids = set(
+            Song.objects.filter(id__in=value).values_list("id", flat=True)
+        )
+        invalid_ids = [sid for sid in value if sid not in existing_ids]
+        if invalid_ids:
+            raise serializers.ValidationError(f"Invalid song IDs: {invalid_ids}")
+        return value
 
 
 # Artist Serializers

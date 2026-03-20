@@ -293,6 +293,58 @@ class ApiService {
   }
 
   // ============================================================
+  // Library Sync Endpoints
+  // ============================================================
+
+  /// Sync local library song IDs with server
+  Future<Map<String, dynamic>> syncLibrary(List<int> songIds) async {
+    try {
+      final response = await _dio.post(
+        '/library/sync/',
+        data: {
+          'song_ids': songIds,
+        },
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return {
+          'success': true,
+          'data': response.data['data'],
+        };
+      }
+      return {
+        'success': false,
+        'error': response.data['error'] ?? 'Sync failed',
+      };
+    } on DioException catch (e) {
+      return _handleError(e, 'Sync failed');
+    }
+  }
+
+  /// Fetch songs in user's personal library
+  Future<Map<String, dynamic>?> fetchUserLibrary({
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    try {
+      final response = await _dio.get(
+        '/library/',
+        queryParameters: {
+          'page': page,
+          'page_size': pageSize,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return response.data;
+      }
+      return null;
+    } on DioException {
+      return null;
+    }
+  }
+
+  // ============================================================
   // Album Endpoints
   // ============================================================
 

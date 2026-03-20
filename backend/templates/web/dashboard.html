@@ -28,9 +28,13 @@
     <!-- Quick Stats Card -->
     <div class="card">
         <h2>📈 Quick Stats</h2>
-        <div class="grid grid-2">
+        <div class="grid grid-3">
             <div style="text-align: center; padding: 1rem;">
-                <div style="font-size: 2rem; color: #00d4ff;">{{ my_requests.count }}</div>
+                <div style="font-size: 2rem; color: #00d4ff;">{{ library_count }}</div>
+                <div style="color: #a0a0a0;">My Songs</div>
+            </div>
+            <div style="text-align: center; padding: 1rem;">
+                <div style="font-size: 2rem; color: #7e57c2;">{{ my_requests.count }}</div>
                 <div style="color: #a0a0a0;">Your Requests</div>
             </div>
             {% if user_profile.can_moderate %}
@@ -39,6 +43,9 @@
                 <div style="color: #a0a0a0;">Pending Review</div>
             </div>
             {% endif %}
+        </div>
+        <div style="margin-top: 1rem; text-align: center;">
+            <a href="{% url 'web:library' %}" class="btn btn-primary btn-sm">View My Library</a>
         </div>
     </div>
 </div>
@@ -129,11 +136,12 @@
 <!-- Quick Actions -->
 <div class="card">
     <h2>⚡ Quick Actions</h2>
-    <div class="grid grid-4" style="margin-top: 1rem;">
+    <div class="grid grid-5" style="margin-top: 1rem;">
+        <a href="{% url 'web:library' %}" class="btn btn-primary">📚 My Library</a>
         <a href="{% url 'web:song_list' %}" class="btn btn-secondary">🎵 Browse Songs</a>
         <a href="{% url 'web:album_list' %}" class="btn btn-secondary">💿 Browse Albums</a>
         <a href="{% url 'web:artist_list' %}" class="btn btn-secondary">🎤 Browse Artists</a>
-        {% if user.profile.role == 'owner' %}
+        {% if user_profile.role == 'owner' %}
         <a href="{% url 'web:song_create' %}" class="btn btn-primary">➕ Add Song</a>
         {% endif %}
     </div>

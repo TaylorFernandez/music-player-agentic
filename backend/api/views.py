@@ -12,6 +12,7 @@ from core.models import (
     SongAlbum,
     SongArtist,
     UserProfile,
+    UserSong,
 )
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
@@ -20,6 +21,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from rest_framework import status, viewsets
+from rest_framework.authtoken.models import Token
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
@@ -36,6 +38,7 @@ from .serializers import (
     ChangeRequestCreateSerializer,
     ChangeRequestReviewSerializer,
     ChangeRequestSerializer,
+    LibrarySyncSerializer,
     SongDetailSerializer,
     SongLookupResultSerializer,
     SongLookupSerializer,
@@ -44,6 +47,7 @@ from .serializers import (
     UserProfileSerializer,
     UserRegistrationSerializer,
     UserSerializer,
+    UserSongSerializer,
 )
 
 # Custom Permissions
@@ -208,6 +212,10 @@ class LoginView(APIView):
         user = authenticate(username=username, password=password)
         if user:
             login(request, user)
+
+            # Get or create auth token for the user
+            token, _ = Token.objects.get_or_create(user=user)
+
             profile = user.userprofile
             return Response(
                 {
@@ -217,6 +225,7 @@ class LoginView(APIView):
                         "username": user.username,
                         "email": user.email,
                         "role": profile.role,
+                        "token": token.key,
                     },
                     "message": "Login successful",
                 }
@@ -1070,5 +1079,65 @@ class UserViewSet(viewsets.ModelViewSet):
                     "role": role,
                 },
                 "message": "Role updated successfully",
+            }
+        )
+
+
+class UserSongViewSet(viewsets.ModelViewSet):
+    """
+    API endpoint for user's personal song library.
+    Allows users to sync and manage their personal collection.
+    """
+
+    serializer_class = UserSongSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = StandardPagination
+
+    def get_queryset(self):
+        """Return songs in current user's library."""
+        return UserSong.objects.filter(user=self.request.user).select_related("song")
+
+    def perform_create(self, serializer):
+        """Associate song with current user."""
+        serializer.save(user=self.request.user)
+
+    @action(detail=False, methods=["post"])
+    def sync(self, request):
+        """
+        Sync local library metadata with the server.
+        Accepts a list of song IDs and ensures they are in the user's library.
+        """
+        serializer = LibrarySyncSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                {"success": False, "error": serializer.errors},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        song_ids = serializer.validated_data["song_ids"]
+        user = request.user
+
+        # Get existing song IDs in user library
+        existing_song_ids = set(
+            UserSong.objects.filter(user=user, song_id__in=song_ids).values_list(
+                "song_id", flat=True
+            )
+        )
+
+        # Identify new song IDs to add
+        new_song_ids = [sid for sid in song_ids if sid not in existing_song_ids]
+
+        # Bulk create new UserSong associations
+        user_songs = [UserSong(user=user, song_id=sid) for sid in new_song_ids]
+        UserSong.objects.bulk_create(user_songs)
+
+        return Response(
+            {
+                "success": True,
+                "data": {
+                    "added_count": len(new_song_ids),
+                    "total_count": UserSong.objects.filter(user=user).count(),
+                },
+                "message": f"Successfully synced {len(new_song_ids)} new songs to library.",
             }
         )

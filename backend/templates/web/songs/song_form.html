@@ -1,103 +1,163 @@
 {% extends "web/base.html" %}
 
-{% block title %}Add Song - Music Player{% endblock %}
+{% block title %}Add New Song - Music Player{% endblock %}
 {% block nav_songs %}active{% endblock %}
 
-{% block content %}
-<div class="page-header">
-    <h1>➕ Add New Song</h1>
-    <p>Create a new song entry in the library</p>
-</div>
+{% block extra_css %}
+<style>
+    .form-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        background: rgba(255, 255, 255, 0.05);
+        padding: 2rem;
+        border-radius: 15px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
 
-<div class="card">
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #a0a0a0;
+        font-weight: 500;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 8px;
+        color: #eaeaea;
+        font-size: 1rem;
+        transition: border-color 0.3s;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #00d4ff;
+        background: rgba(255, 255, 255, 0.15);
+    }
+
+    .form-control option {
+        background: #1a1a2e;
+        color: #eaeaea;
+    }
+
+    textarea.form-control {
+        min-height: 150px;
+        resize: vertical;
+    }
+
+    .help-text {
+        font-size: 0.85rem;
+        color: #666;
+        margin-top: 0.25rem;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+    }
+
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+        border: none;
+        transition: all 0.3s;
+    }
+
+    .btn-primary {
+        background: #00d4ff;
+        color: #1a1a2e;
+    }
+
+    .btn-primary:hover {
+        background: #00b4d8;
+        transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+        background: rgba(255, 255, 255, 0.1);
+        color: #eaeaea;
+    }
+
+    .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    h1 {
+        margin-bottom: 2rem;
+        text-align: center;
+        background: linear-gradient(to right, #fff, #00d4ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1>Add New Song</h1>
+    
     <form method="post">
         {% csrf_token %}
-
+        
         <div class="form-group">
-            <label for="title">Song Title *</label>
-            <input type="text" id="title" name="title" required placeholder="Enter song title">
+            <label for="title">Title *</label>
+            <input type="text" id="title" name="title" class="form-control" required placeholder="Enter song title">
         </div>
-
+        
         <div class="form-group">
             <label for="duration">Duration (seconds) *</label>
-            <input type="number" id="duration" name="duration" required min="0" placeholder="e.g., 240">
+            <input type="number" id="duration" name="duration" class="form-control" required placeholder="e.g., 215">
+            <p class="help-text">Total length of the song in seconds.</p>
         </div>
-
+        
         <div class="form-group">
-            <label for="artists">Artists *</label>
-            <select id="artists" name="artists" multiple required style="height: 150px;">
+            <label for="artwork_url">Artwork URL</label>
+            <input type="url" id="artwork_url" name="artwork_url" class="form-control" placeholder="https://example.com/image.jpg">
+        </div>
+        
+        <div class="form-group">
+            <label for="artists">Artists</label>
+            <select id="artists" name="artists" class="form-control" multiple size="5">
                 {% for artist in artists %}
                     <option value="{{ artist.id }}">{{ artist.name }}</option>
                 {% endfor %}
             </select>
-            <small style="color: #a0a0a0;">Hold Ctrl/Cmd to select multiple artists. First artist will be set as main.</small>
+            <p class="help-text">Hold Ctrl (or Cmd on Mac) to select multiple artists.</p>
         </div>
-
+        
         <div class="form-group">
             <label for="albums">Albums</label>
-            <select id="albums" name="albums" multiple style="height: 100px;">
+            <select id="albums" name="albums" class="form-control" multiple size="5">
                 {% for album in albums %}
                     <option value="{{ album.id }}">{{ album.title }}</option>
                 {% endfor %}
             </select>
-            <small style="color: #a0a0a0;">Optional - Hold Ctrl/Cmd to select multiple albums.</small>
+            <p class="help-text">Hold Ctrl (or Cmd on Mac) to select multiple albums.</p>
         </div>
-
-        <div class="form-group">
-            <label for="track_numbers">Track Numbers</label>
-            <input type="text" id="track_numbers" name="track_numbers" placeholder="e.g., 1 (comma-separated if multiple albums)">
-            <small style="color: #a0a0a0;">Track number for each album selected above (same order).</small>
-        </div>
-
-        <div class="form-group">
-            <label for="file_hash">File Hash (SHA-256)</label>
-            <input type="text" id="file_hash" name="file_hash" maxlength="64" placeholder="Optional - SHA-256 hash of audio file">
-        </div>
-
-        <div class="form-group">
-            <label for="artwork_url">Artwork URL</label>
-            <input type="url" id="artwork_url" name="artwork_url" placeholder="https://example.com/artwork.jpg">
-        </div>
-
+        
         <div class="form-group">
             <label for="lyrics">Lyrics</label>
-            <textarea id="lyrics" name="lyrics" rows="8" placeholder="Enter song lyrics..."></textarea>
+            <textarea id="lyrics" name="lyrics" class="form-control" placeholder="Enter song lyrics here..."></textarea>
         </div>
-
-        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
-            <button type="submit" class="btn btn-primary">Save Song</button>
+        
+        <input type="hidden" name="file_hash" value="">
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Submit for Review</button>
             <a href="{% url 'web:song_list' %}" class="btn btn-secondary">Cancel</a>
         </div>
     </form>
 </div>
-
-<div class="card">
-    <h3>💡 Tips</h3>
-    <ul style="color: #a0a0a0; margin-left: 1.5rem;">
-        <li>Duration should be in seconds (e.g., 3 minutes = 180 seconds)</li>
-        <li>Select multiple artists if the song features multiple performers</li>
-        <li>The file hash helps identify duplicate songs and match with local files</li>
-        <li>Artwork URL can be any publicly accessible image URL</li>
-        {% if user.userprofile.role != 'owner' %}
-        <li><strong>Note:</strong> Your submission will be sent for review before being added to the library.</li>
-        {% endif %}
-    </ul>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-// Auto-calculate duration from MM:SS input
-document.getElementById('duration').addEventListener('change', function() {
-    const value = this.value;
-    if (value && value.includes(':')) {
-        const parts = value.split(':');
-        if (parts.length === 2) {
-            const minutes = parseInt(parts[0]) || 0;
-            const seconds = parseInt(parts[1]) || 0;
-            this.value = (minutes * 60) + seconds;
-        }
-    }
-});
-</script>
 {% endblock %}

@@ -14,6 +14,8 @@ urlpatterns = [
     path("", views.home, name="home"),
     # Dashboard
     path("dashboard/", views.dashboard, name="dashboard"),
+    # User Library
+    path("library/", views.library, name="library"),
     # Song management
     path("songs/", views.SongListView.as_view(), name="song_list"),
     path("songs/<int:pk>/", views.SongDetailView.as_view(), name="song_detail"),

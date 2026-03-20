@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import 'metadata_service.dart';
 import 'song_matching_service.dart';
 import 'api_service.dart';
+import 'media_store_library_service.dart';
 
 /// Model class representing a local track in the music library.
 class LocalTrackInfo {
@@ -235,6 +236,7 @@ class LibraryService extends ChangeNotifier {
   final MetadataService _metadataService;
   final SongMatchingService _songMatchingService;
   final ApiService? _apiService;
+  final MediaStoreLibraryService _mediaStoreService;
 
   // Library state
   final Map<String, LocalTrackInfo> _tracks = {};
@@ -266,9 +268,11 @@ class LibraryService extends ChangeNotifier {
     MetadataService? metadataService,
     SongMatchingService? songMatchingService,
     ApiService? apiService,
+    MediaStoreLibraryService? mediaStoreService,
   })  : _metadataService = metadataService ?? MetadataService(),
         _songMatchingService = songMatchingService ?? SongMatchingService(apiService: apiService ?? ApiService()),
-        _apiService = apiService;
+        _apiService = apiService,
+        _mediaStoreService = mediaStoreService ?? MediaStoreLibraryService();
 
   /// Initialize the library service
   Future<void> initialize() async {
@@ -279,7 +283,11 @@ class LibraryService extends ChangeNotifier {
 
   /// Check and request storage permissions
   Future<bool> checkPermissions() async {
-    if (Platform.isAndroid || Platform.isIOS) {
+    if (Platform.isAndroid) {
+      // Use MediaStore service for Android
+      return await _mediaStoreService.hasPermissions();
+    }
+    if (Platform.isIOS) {
       final status = await Permission.storage.status;
       if (!status.isGranted) {
         final result = await Permission.storage.request();
@@ -290,7 +298,104 @@ class LibraryService extends ChangeNotifier {
     return true; // Desktop platforms don't need permission
   }
 
-  /// Scan a directory for music files
+  /// Scan the device's music library using MediaStore (Android only).
+  /// Automatically discovers all songs from the device's internal music database.
+  Future<List<LocalTrackInfo>> scanDeviceLibrary({
+    bool matchWithServer = true,
+    void Function(int current, int total, String path)? onProgress,
+  }) async {
+    if (_isScanning) {
+      return [];
+    }
+
+    _isScanning = true;
+    _scanProgress = 0.0;
+    _totalScanned = 0;
+    _totalFound = 0;
+    notifyListeners();
+
+    try {
+      // Scan using MediaStore
+      final songs = await _mediaStoreService.scanDeviceLibrary();
+
+      _totalFound = songs.length;
+      final results = <LocalTrackInfo>[];
+
+      // Process each song
+      for (var i = 0; i < songs.length; i++) {
+        final song = songs[i];
+        _currentScanPath = song.filePath;
+        _scanProgress = (i + 1) / songs.length;
+        _totalScanned = i + 1;
+        notifyListeners();
+
+        onProgress?.call(i + 1, songs.length, song.filePath);
+
+        // Use path-based hash for deduplication
+        String fileHash = song.fileHash;
+        if (fileHash.isEmpty) {
+          fileHash = song.filePath.hashCode.toString();
+        }
+
+        // Check if we already have this track
+        final existingTrack = _tracks[fileHash];
+        if (existingTrack != null) {
+          results.add(existingTrack);
+          continue;
+        }
+
+        // Match with server if requested
+        int? serverSongId;
+        double? matchConfidence;
+
+        if (matchWithServer && _apiService != null && song.title != null) {
+          final matchResult = await _songMatchingService.matchByTitleAndArtist(
+            title: song.title!,
+            artist: song.artist,
+          );
+          serverSongId = matchResult.matchedSong?.id;
+          matchConfidence = matchResult.confidence;
+        }
+
+        // Create track info with calculated hash
+        final trackInfo = LocalTrackInfo(
+          filePath: song.filePath,
+          fileName: song.fileName,
+          title: song.title,
+          artist: song.artist,
+          album: song.album,
+          duration: song.duration,
+          fileHash: fileHash,
+          fileSize: song.fileSize,
+          lastModified: song.lastModified,
+          addedAt: song.addedAt,
+          serverSongId: serverSongId,
+          matchConfidence: matchConfidence,
+        );
+
+        // Add to library
+        _tracks[fileHash] = trackInfo;
+        results.add(trackInfo);
+      }
+
+      // Save updated library
+      await _saveLibrary();
+
+      _isScanning = false;
+      _currentScanPath = null;
+      notifyListeners();
+
+      return results;
+    } catch (e) {
+      debugPrint('Error scanning device library: $e');
+      _isScanning = false;
+      _currentScanPath = null;
+      notifyListeners();
+      return [];
+    }
+  }
+
+  /// Scan a directory for music files (fallback for custom folders).
   Future<List<LocalTrackInfo>> scanDirectory(
     String directoryPath, {
     bool recursive = true,
@@ -403,6 +508,19 @@ class LibraryService extends ChangeNotifier {
       notifyListeners();
       return [];
     }
+  }
+
+  /// Get all discovered songs from MediaStore.
+  List<LocalTrackInfo> getDiscoveredSongs() => tracks;
+
+  /// Get albums from MediaStore.
+  Future<List<Map<String, dynamic>>> getDiscoveredAlbums() async {
+    return await _mediaStoreService.queryAlbums();
+  }
+
+  /// Get artists from MediaStore.
+  Future<List<Map<String, dynamic>>> getDiscoveredArtists() async {
+    return await _mediaStoreService.queryArtists();
   }
 
   /// Get a track by file hash
@@ -606,6 +724,42 @@ class LibraryService extends ChangeNotifier {
     }
 
     return allResults;
+  }
+
+  /// Sync the local library with the server.
+  /// Collects all local tracks that have a server match and sends them to the server.
+  Future<Map<String, dynamic>> syncWithServer() async {
+    final api = _apiService;
+    if (api == null) {
+      return {'success': false, 'error': 'API service not initialized'};
+    }
+
+    if (!await api.isAuthenticated()) {
+      return {'success': false, 'error': 'User not authenticated'};
+    }
+
+    // Collect all matched song IDs
+    final songIds = _tracks.values
+        .where((track) => track.serverSongId != null)
+        .map((track) => track.serverSongId!)
+        .toSet()
+        .toList();
+
+    if (songIds.isEmpty) {
+      return {
+        'success': true,
+        'message': 'No tracks with server matches found to sync.',
+        'data': {'added_count': 0}
+      };
+    }
+
+    try {
+      final result = await api.syncLibrary(songIds);
+      return result;
+    } catch (e) {
+      debugPrint('Error syncing with server: $e');
+      return {'success': false, 'error': e.toString()};
+    }
   }
 
   // Private methods for persistence

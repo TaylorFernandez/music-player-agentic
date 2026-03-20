@@ -48,12 +48,6 @@ This project aims to create an intelligent MP3 player that connects to a server 
                          └─────────────────┘
 ```
 
-### Component Breakdown
-1. **Mobile App (Flutter)**: Provides music playback and basic UI, sends metadata to server
-2. **Backend API (Django REST Framework)**: Handles business logic, data retrieval, and user management
-3. **Database (PostgreSQL)**: Stores song, album, artist data and user change requests
-4. **Web Interface (Django Templates)**: Admin panel for data management and moderation
-
 ## Database Schema
 
 ### Core Entities
@@ -63,8 +57,6 @@ This project aims to create an intelligent MP3 player that connects to a server 
 - `name` (String, unique)
 - `image` (ImageField or URL)
 - `bio` (TextField)
-- `created_at` (DateTime)
-- `updated_at` (DateTime)
 
 #### Album
 - `id` (Primary Key)
@@ -73,41 +65,20 @@ This project aims to create an intelligent MP3 player that connects to a server 
 - `release_date` (Date, nullable)
 - `cover_art` (ImageField or URL)
 - `description` (TextField)
-- `created_at` (DateTime)
-- `updated_at` (DateTime)
 
 #### Song
 - `id` (Primary Key)
 - `title` (String)
 - `duration` (Integer, in seconds)
-- `file_hash` (CharField, for identifying duplicate songs)
+- `file_hash` (CharField)
 - `lyrics` (TextField)
-- `artwork` (ImageField or URL, song-specific)
-- `created_at` (DateTime)
-- `updated_at` (DateTime)
-
-### Relationship Tables
-
-#### AlbumArtists (Many-to-Many)
-- `album_id` (ForeignKey to Album)
-- `artist_id` (ForeignKey to Artist)
-
-#### SongAlbums (Many-to-Many)
-- `song_id` (ForeignKey to Song)
-- `album_id` (ForeignKey to Album)
-- `track_number` (Integer, nullable)
-
-#### SongArtists (Many-to-Many)
-- `song_id` (ForeignKey to Song)
-- `artist_id` (ForeignKey to Artist)
-- `role` (ChoiceField: Main, Featured, Producer, etc.)
+- `artwork` (ImageField or URL)
 
 ### User Management & Moderation
 
 #### UserProfile (extends Django User)
 - `user` (OneToOne to User)
 - `role` (ChoiceField: general, moderator, owner)
-- `avatar` (ImageField, optional)
 
 #### ChangeRequest
 - `id` (Primary Key)
@@ -118,179 +89,79 @@ This project aims to create an intelligent MP3 player that connects to a server 
 - `old_value` (TextField)
 - `new_value` (TextField)
 - `status` (ChoiceField: pending, approved, rejected)
-- `reviewed_by` (ForeignKey to User, nullable)
-- `reviewed_at` (DateTime, nullable)
-- `created_at` (DateTime)
-- `notes` (TextField, for moderator comments)
-
-## Backend API Design
-
-### Authentication Endpoints
-- `POST /api/auth/register/` - User registration
-- `POST /api/auth/login/` - Username/password login
-- `POST /api/auth/google/` - Google SSO
-- `POST /api/auth/logout/` - Logout
-- `GET /api/auth/me/` - Current user info
-
-### Song Endpoints
-- `GET /api/songs/` - List all songs (with filtering)
-- `GET /api/songs/{id}/` - Get song details
-- `POST /api/songs/lookup/` - Lookup song by metadata (title, artist, duration hash)
-- `PUT /api/songs/{id}/` - Update song (requires moderation)
-- `GET /api/songs/{id}/lyrics/` - Get song lyrics
-
-### Album Endpoints
-- `GET /api/albums/` - List all albums
-- `GET /api/albums/{id}/` - Get album details with songs
-- `PUT /api/albums/{id}/` - Update album (requires moderation)
-
-### Artist Endpoints
-- `GET /api/artists/` - List all artists
-- `GET /api/artists/{id}/` - Get artist details with discography
-- `PUT /api/artists/{id}/` - Update artist (requires moderation)
-
-### Moderation Endpoints
-- `GET /api/moderation/change-requests/` - List pending change requests
-- `POST /api/moderation/change-requests/{id}/review/` - Approve/reject change request
-- `GET /api/moderation/history/` - View moderation history
-
-## Flutter App Design
-
-### Core Features
-1. **Local Music Scanning**: Scan device for MP3 files, extract metadata
-2. **Audio Playback**: Play, pause, next, previous, seek, shuffle, repeat
-3. **Playlist Management**: Create, edit, delete playlists
-4. **Server Sync**: Match local songs with server database
-5. **Offline Mode**: Basic playback without server connection
-
-### UI Screens
-1. **Library Screen**: List of songs, albums, artists
-2. **Now Playing Screen**: Current song with controls, lyrics display
-3. **Playlist Screen**: Create and manage playlists
-4. **Search Screen**: Search local and server database
-5. **Settings Screen**: App preferences, login/logout
-
-### Key Packages
-- `just_audio` or `audioplayers` for audio playback
-- `file_picker` for selecting music files
-- `flutter_secure_storage` for storing tokens
-- `dio` for HTTP requests
-- `provider` or `riverpod` for state management
-- `cached_network_image` for artwork
-
-## Web Interface Design
-
-### Pages
-1. **Login Page**: User authentication
-2. **Dashboard**: Overview of songs, albums, artists
-3. **Song Management**: View, edit, approve song data
-4. **Album Management**: View, edit, approve album data
-5. **Artist Management**: View, edit, approve artist data
-6. **Moderation Queue**: Review user-submitted changes
-7. **User Management**: Manage user roles (owner-only)
-
-### Design Guidelines
-- Use Django template inheritance for consistent layout
-- Bootstrap 5 for responsive design
-- Custom CSS for branding
-- Match logo and favicon with mobile app
-
-## Authentication and Authorization
-
-### User Roles
-1. **General User** (unauthenticated or logged in):
-   - View all song/album/artist data
-   - Submit change requests (requires moderation)
-   - Basic MP3 player functionality
-
-2. **Moderator**:
-   - All general user permissions
-   - Approve/reject/edit change requests
-   - Direct edits still require second moderator review
-
-3. **Owner**:
-   - All moderator permissions
-   - Make direct changes without review (optional)
-   - Manage user roles
-
-### Implementation Details
-- Use Django's built-in permission system
-- Custom middleware for role-based access
-- JWT or session-based authentication for API
-- OAuth2 for Google SSO integration
 
 ## Development Phases
 
-### Phase 1: Foundation (Week 1-2)
+### Phase 1: Foundation (Completed)
 - Set up Django project with PostgreSQL
 - Create basic models (Song, Album, Artist)
 - Implement authentication system
 - Set up Flutter project structure
 - Basic audio playback in Flutter
 
-### Phase 2: Core Functionality (Week 3-4)
+### Phase 2: Core Functionality (Completed)
 - Implement metadata extraction in Flutter
 - Create API endpoints for data retrieval
 - Build basic web interface for data viewing
 - Implement song matching logic (local ↔ server)
 
-### Phase 3: User Features (Week 5-6)
+### Phase 3: User Features (Completed)
 - Playlist management in Flutter
 - Search functionality (local and server)
 - Lyrics display
 - User profile management
 
-### Phase 4: Moderation System (Week 7-8)
+### Phase 4: Moderation System (Completed)
 - Change request model and API
 - Moderation interface in web app
-- Notification system for pending reviews
 - Role-based access control
 
-### Phase 5: Polish & Testing (Week 9-10)
+### Phase 5: Initial Polish & Testing (Completed)
 - UI/UX refinements
-- Logo and branding consistency
 - Error handling and edge cases
 - Performance optimization
-- Documentation
 
-## File Organization in Docs
+### Phase 6: Feature Completion (Current)
+- **Backend (Web Interface)**:
+    - Implement web-based playback functionality for Songs, Albums, and Artists.
+    - Implement the "Add Song" form and processing logic.
+    - Complete the moderation logic for creating new objects (handling `model_id == 0`).
+- **Frontend (Mobile App)**:
+    - Implement the User Profile screen.
+    - Implement Privacy Settings, Privacy Policy, and Terms of Service screens.
+    - Implement the "Share" functionality in the Now Playing screen.
 
-```
-Docs/
-├── Plans/
-│   └── development_plan.md (this file)
-├── Architecture/
-│   ├── database_diagram.md
-│   └── api_specification.md
-├── UI_Design/
-│   ├── flutter_wireframes.md
-│   └── web_wireframes.md
-├── API_Documentation/
-│   ├── endpoints.md
-│   └── authentication_flow.md
-├── Testing/
-│   ├── test_cases.md
-│   └── manual_testing.md
-└── Deployment/
-    ├── setup_guide.md
-    └── production_checklist.md
-```
+### Phase 7: UI Redesign (Visual Overhaul)
+- **Frontend Redesign**:
+    - Implement a full UI overhaul based on `UI Design Templates/Frontend`.
+    - Apply the modern dark/gradient aesthetic seen in `lyrics and player.webp` and `musicplayer.png`.
+    - Revamp the login experience based on `login screen.webp`.
+- **Backend Redesign**:
+    - Redesign the Django web interface based on `UI Design Templates/Backend`.
+    - Implement the new Dashboard layout from `site dashboard.webp`.
+    - Apply the professional styling to the login screen from `login screen.webp`.
+- **Branding**:
+    - Ensure logo and favicon consistency across both platforms as per project requirements.
 
-## Next Steps
+### Phase 8: Final Validation & Delivery
+- Comprehensive testing of all new features.
+- Final visual audit against design templates.
+- Bug fixing and performance tuning.
+- Final documentation update.
 
-1. Create detailed database schema with Django models
-2. Set up development environment (virtualenv, Flutter SDK)
-3. Begin implementing Phase 1 components
-4. Regular progress updates in Docs folder
+## UI Design Reference
 
-## Notes and Considerations
+### Mobile (Flutter)
+Designs located in `./UI Design Templates/Frontend/`:
+- `login screen.webp`: Modern login interface with centered logo.
+- `lyrics and player.webp`: High-fidelity player view with integrated lyrics.
+- `musicplayer.png`: Main library and player navigation interface.
 
-1. **Privacy**: The app never uploads actual MP3 files, only metadata
-2. **Performance**: Cache server responses in Flutter app for offline use
-3. **Scalability**: Database indexing on frequently queried fields
-4. **Legal**: Ensure compliance with music licensing for lyrics/artwork
-5. **Accessibility**: Follow WCAG guidelines for web and mobile interfaces
+### Web (Django)
+Designs located in `./UI Design Templates/Backend/`:
+- `login screen.webp`: Clean, centered login form.
+- `site dashboard.webp`: Sidebar-driven dashboard with data visualizations and management tables.
 
 ---
-*Last Updated: [Date]*
-*Project Status: Planning Phase*
+*Last Updated: March 19, 2026*
+*Project Status: Phase 6 - Feature Completion*

@@ -40,7 +40,7 @@
         </div>
 
         <div class="detail-actions">
-            <a href="#" class="btn btn-primary" onclick="alert('Play functionality coming soon!'); return false;">▶ Play</a>
+            <button class="btn btn-primary" onclick="playSong('{{ song.title|escapejs }}', '{{ song.artists.first.name|escapejs|default:"Unknown Artist" }}', 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3', '{{ song.artwork_url|escapejs }}')">▶ Play</button>
             {% if user.is_authenticated %}
                 <a href="{% url 'web:song_edit' pk=song.id %}" class="btn btn-secondary">✏ Edit</a>
             {% endif %}

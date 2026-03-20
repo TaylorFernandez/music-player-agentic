@@ -102,6 +102,83 @@ class SongMatchingService {
     }
   }
 
+  /// Match by title and artist (used for MediaStore songs).
+  Future<SongMatchResult> matchByTitleAndArtist({
+    required String title,
+    String? artist,
+  }) async {
+    try {
+      if (!title.isNotEmpty) {
+        return SongMatchResult(
+          localMetadata: ExtractedMetadata(
+            filePath: '',
+            fileName: title,
+            fileHash: '',
+            fileSize: 0,
+            lastModified: DateTime.now(),
+          ),
+          matchType: 'none',
+          confidence: 0.0,
+          errorMessage: 'No title provided',
+        );
+      }
+
+      final result = await _apiService.lookupSong(
+        title: title,
+        artist: artist,
+      );
+
+      if (result == null) {
+        return SongMatchResult(
+          localMetadata: ExtractedMetadata(
+            filePath: '',
+            fileName: title,
+            fileHash: '',
+            fileSize: 0,
+            lastModified: DateTime.now(),
+          ),
+          matchType: 'none',
+          confidence: 0.0,
+        );
+      }
+
+      final matchType = result['match_type'] as String? ?? 'none';
+      final confidence = (result['confidence'] as num?)?.toDouble() ?? 0.0;
+      final songData = result['song'] as Map<String, dynamic>?;
+
+      Song? matchedSong;
+      if (songData != null) {
+        matchedSong = Song.fromJson(songData);
+      }
+
+      return SongMatchResult(
+        localMetadata: ExtractedMetadata(
+          filePath: '',
+          fileName: title,
+          fileHash: '',
+          fileSize: 0,
+          lastModified: DateTime.now(),
+        ),
+        matchedSong: matchedSong,
+        matchType: matchType,
+        confidence: confidence,
+      );
+    } catch (e) {
+      return SongMatchResult(
+        localMetadata: ExtractedMetadata(
+          filePath: '',
+          fileName: title,
+          fileHash: '',
+          fileSize: 0,
+          lastModified: DateTime.now(),
+        ),
+        matchType: 'none',
+        confidence: 0.0,
+        errorMessage: 'Error matching: ${e.toString()}',
+      );
+    }
+  }
+
   /// Match extracted metadata with the server database.
   /// Returns a SongMatchResult with match details.
   Future<SongMatchResult> matchMetadata({

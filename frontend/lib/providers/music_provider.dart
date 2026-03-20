@@ -121,6 +121,8 @@ class MusicProvider extends ChangeNotifier {
   bool get hasMoreArtists => _hasMoreArtists;
   bool get isScanningLibrary => _libraryService?.isScanning ?? false;
   double get scanProgress => _libraryService?.scanProgress ?? 0.0;
+  int get totalFound => _libraryService?.totalFound ?? 0;
+  int get totalScanned => _libraryService?.totalScanned ?? 0;
 
   // ============================================================
   // Song Methods
@@ -427,7 +429,27 @@ class MusicProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Scan local library for music files
+  /// Scan local library for music files using MediaStore (automatic discovery).
+  /// Discovers all songs from the device's internal music database.
+  Future<List<LocalTrackInfo>> scanDeviceLibrary({
+    bool matchWithServer = true,
+    void Function(int current, int total, String path)? onProgress,
+  }) async {
+    final library = _libraryService;
+    if (library == null) return [];
+    final tracks = await library.scanDeviceLibrary(
+      matchWithServer: matchWithServer,
+      onProgress: onProgress,
+    );
+
+    // Sync with server if logged in
+    await syncLibrary();
+
+    notifyListeners();
+    return tracks;
+  }
+
+  /// Scan local library for music files from a specific directory
   Future<List<LocalTrackInfo>> scanLibrary(
     String directoryPath, {
     bool recursive = true,
@@ -443,9 +465,42 @@ class MusicProvider extends ChangeNotifier {
       onProgress: onProgress,
     );
 
+    // Sync with server if logged in
+    await syncLibrary();
+
     notifyListeners();
     return tracks;
   }
+
+  /// Sync local library with the server.
+  Future<Map<String, dynamic>> syncLibrary() async {
+    final library = _libraryService;
+    if (library == null) return {'success': false, 'error': 'Library service not initialized'};
+
+    final result = await library.syncWithServer();
+    if (result['success'] == true) {
+      notifyListeners();
+    }
+    return result;
+  }
+
+  /// Get all discovered local songs from MediaStore.
+  List<LocalTrackInfo> getLocalSongs() {
+    return _libraryService?.getDiscoveredSongs() ?? [];
+  }
+
+  /// Get discovered albums from MediaStore.
+  Future<List<Map<String, dynamic>>> getLocalAlbums() async {
+    return await _libraryService?.getDiscoveredAlbums() ?? [];
+  }
+
+  /// Get discovered artists from MediaStore.
+  Future<List<Map<String, dynamic>>> getLocalArtists() async {
+    return await _libraryService?.getDiscoveredArtists() ?? [];
+  }
+
+  /// Check if device library has been scanned.
+  bool get hasScannedDeviceLibrary => _libraryService?.tracks.isNotEmpty == true;
 
   /// Get formatted position string (MM:SS)
   String get formattedPosition {

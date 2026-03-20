@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Music Player{% endblock %}</title>
+    <title>{% block title %}MusicStore{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,617 +14,621 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #eaeaea;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f5f5f7;
+            color: #1d1d1f;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* Navigation */
-        nav {
-            background: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 1rem 2rem;
-            position: sticky;
-            top: 0;
+        /* Layout */
+        .app-wrapper {
+            display: flex;
+            flex: 1;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 260px;
+            background: #fff;
+            border-right: 1px solid #e5e5e5;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem 0;
             z-index: 100;
         }
 
-        .nav-container {
-            max-width: 1400px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-
-        .nav-brand {
+        .sidebar-logo {
+            padding: 0 2rem;
+            margin-bottom: 3rem;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.75rem;
             text-decoration: none;
-            color: #eaeaea;
+            color: #1d1d1f;
+            font-weight: 800;
             font-size: 1.5rem;
-            font-weight: bold;
+            letter-spacing: -0.5px;
         }
 
-        .nav-brand:hover {
-            color: #00d4ff;
+        .sidebar-logo i {
+            color: #5e5ce6;
+            font-size: 1.2rem;
         }
 
-        .nav-links {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
+        .sidebar-nav {
+            flex: 1;
         }
 
-        .nav-link {
-            color: #a0a0a0;
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            border-radius: 5px;
-            transition: all 0.3s;
+        .sidebar-section-title {
+            padding: 0 2rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #86868b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .nav-link:hover {
-            color: #00d4ff;
-            background: rgba(0, 212, 255, 0.1);
-        }
-
-        .nav-link.active {
-            color: #00d4ff;
-            background: rgba(0, 212, 255, 0.2);
-        }
-
-        .nav-search {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .nav-search input {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 5px;
-            padding: 0.5rem 1rem;
-            color: #eaeaea;
-            width: 200px;
-        }
-
-        .nav-search input::placeholder {
-            color: #666;
-        }
-
-        .nav-search input:focus {
-            outline: none;
-            border-color: #00d4ff;
-        }
-
-        .nav-search button {
-            background: linear-gradient(45deg, #00d4ff, #7b2cbf);
-            border: none;
-            border-radius: 5px;
-            padding: 0.5rem 1rem;
-            color: white;
-            cursor: pointer;
-            transition: opacity 0.3s;
-        }
-
-        .nav-search button:hover {
-            opacity: 0.9;
-        }
-
-        .nav-user {
+        .sidebar-link {
             display: flex;
             align-items: center;
             gap: 1rem;
-        }
-
-        .nav-user a {
-            color: #c77dff;
+            padding: 0.75rem 2rem;
+            color: #1d1d1f;
             text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: all 0.2s;
         }
 
-        .nav-user a:hover {
-            color: #00d4ff;
+        .sidebar-link i {
+            width: 20px;
+            text-align: center;
+            color: #86868b;
+            font-size: 1.1rem;
+        }
+
+        .sidebar-link:hover {
+            background: #f5f5f7;
+        }
+
+        .sidebar-link.active {
+            color: #5e5ce6;
+            background: #f0f0ff;
+        }
+
+        .sidebar-link.active i {
+            color: #5e5ce6;
         }
 
         /* Main Content */
-        main {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 2rem;
-        }
-
-        /* Flash Messages */
-        .messages {
-            margin-bottom: 2rem;
-        }
-
-        .message {
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 0.5rem;
-        }
-
-        .message.success {
-            background: rgba(76, 175, 80, 0.2);
-            border: 1px solid rgba(76, 175, 80, 0.5);
-            color: #81c784;
-        }
-
-        .message.error {
-            background: rgba(244, 67, 54, 0.2);
-            border: 1px solid rgba(244, 67, 54, 0.5);
-            color: #e57373;
-        }
-
-        .message.info {
-            background: rgba(33, 150, 243, 0.2);
-            border: 1px solid rgba(33, 150, 243, 0.5);
-            color: #64b5f6;
-        }
-
-        .message.warning {
-            background: rgba(255, 152, 0, 0.2);
-            border: 1px solid rgba(255, 152, 0, 0.5);
-            color: #ffb74d;
-        }
-
-        /* Page Header */
-        .page-header {
-            margin-bottom: 2rem;
-        }
-
-        .page-header h1 {
-            font-size: 2.5rem;
-            background: linear-gradient(45deg, #00d4ff, #7b2cbf);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            margin-bottom: 0.5rem;
-        }
-
-        .page-header p {
-            color: #a0a0a0;
-        }
-
-        /* Cards */
-        .card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .card h2 {
-            color: #00d4ff;
-            margin-bottom: 1rem;
-        }
-
-        .card h3 {
-            color: #c77dff;
-            margin-bottom: 0.5rem;
-        }
-
-        /* Buttons */
-        .btn {
-            display: inline-block;
-            padding: 0.6rem 1.5rem;
-            border-radius: 25px;
-            text-decoration: none;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s;
-            border: none;
-            font-size: 1rem;
-        }
-
-        .btn-primary {
-            background: linear-gradient(45deg, #00d4ff, #7b2cbf);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.4);
-        }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: #eaeaea;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .btn-success {
-            background: linear-gradient(45deg, #4caf50, #2e7d32);
-            color: white;
-        }
-
-        .btn-danger {
-            background: linear-gradient(45deg, #f44336, #c62828);
-            color: white;
-        }
-
-        .btn-sm {
-            padding: 0.4rem 1rem;
-            font-size: 0.9rem;
-        }
-
-        /* Forms */
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            color: #c77dff;
-            font-weight: 500;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            padding: 0.8rem;
-            color: #eaeaea;
-            font-size: 1rem;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #00d4ff;
-        }
-
-        .form-group textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-
-        /* Tables */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        table th,
-        table td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        table th {
-            color: #00d4ff;
-            font-weight: 600;
-        }
-
-        table tr:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        /* Grid Layout */
-        .grid {
-            display: grid;
-            gap: 1.5rem;
-        }
-
-        .grid-2 {
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        }
-
-        .grid-3 {
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        }
-
-        .grid-4 {
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        }
-
-        /* Item Cards */
-        .item-card {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
+        .main-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
-            transition: all 0.3s;
-            text-decoration: none;
-            color: inherit;
-            display: block;
+            position: relative;
         }
 
-        .item-card:hover {
-            transform: translateY(-5px);
-            border-color: rgba(0, 212, 255, 0.5);
-            box-shadow: 0 10px 30px rgba(0, 212, 255, 0.2);
+        /* Top Header */
+        header {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            padding: 1rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e5e5e5;
+            height: 70px;
+            flex-shrink: 0;
         }
 
-        .item-card-image {
+        .search-container {
+            position: relative;
+            width: 400px;
+        }
+
+        .search-container i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #86868b;
+        }
+
+        .search-bar {
+            background: #f5f5f7;
+            border: 1px solid transparent;
+            padding: 0.6rem 1rem 0.6rem 2.5rem;
+            border-radius: 12px;
             width: 100%;
-            aspect-ratio: 1;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .search-bar:focus {
+            outline: none;
+            background: #fff;
+            border-color: #5e5ce6;
+            box-shadow: 0 0 0 4px rgba(94, 92, 230, 0.1);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+            color: #1d1d1f;
+        }
+
+        .user-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: #f5f5f7;
+            color: #5e5ce6;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 4rem;
+            font-weight: 700;
+            border: 1px solid #e5e5e5;
+            overflow: hidden;
         }
 
-        .item-card-image img {
+        .user-avatar img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
 
-        .item-card-content {
-            padding: 1rem;
+        /* Content Area */
+        main {
+            flex: 1;
+            padding: 3rem;
+            overflow-y: auto;
+            background-color: #fff;
         }
 
-        .item-card-title {
-            font-weight: 600;
-            margin-bottom: 0.3rem;
+        /* Player Bar Redesign */
+        .player-bar {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 300px);
+            max-width: 1100px;
+            background: #5e5ce6;
+            color: #fff;
+            padding: 0.75rem 2rem;
+            border-radius: 20px;
+            z-index: 1000;
+            box-shadow: 0 20px 40px rgba(94, 92, 230, 0.3);
+            display: none;
+        }
+
+        .player-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 2rem;
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            width: 250px;
+        }
+
+        .player-artwork {
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .player-text {
+            overflow: hidden;
+        }
+
+        .player-title {
+            font-weight: 700;
+            color: #fff;
+            font-size: 0.9rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        .item-card-subtitle {
-            color: #a0a0a0;
-            font-size: 0.9rem;
-        }
-
-        /* Filter Bar */
-        .filter-bar {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 1rem;
-            margin-bottom: 2rem;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            align-items: flex-end;
-        }
-
-        .filter-group {
-            flex: 1;
-            min-width: 150px;
-        }
-
-        .filter-group label {
-            display: block;
-            margin-bottom: 0.3rem;
-            color: #a0a0a0;
-            font-size: 0.9rem;
-        }
-
-        .filter-group input,
-        .filter-group select {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 5px;
-            padding: 0.5rem;
-            color: #eaeaea;
-        }
-
-        /* Status Badges */
-        .badge {
-            display: inline-block;
-            padding: 0.3rem 0.8rem;
-            border-radius: 15px;
+        .player-artist {
             font-size: 0.8rem;
-            font-weight: 500;
+            color: rgba(255, 255, 255, 0.8);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
-        .badge-pending {
-            background: rgba(255, 152, 0, 0.2);
-            color: #ffb74d;
-        }
-
-        .badge-approved {
-            background: rgba(76, 175, 80, 0.2);
-            color: #81c784;
-        }
-
-        .badge-rejected {
-            background: rgba(244, 67, 54, 0.2);
-            color: #e57373;
-        }
-
-        /* Pagination */
-        .pagination {
+        .player-controls {
+            flex: 1;
             display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-top: 2rem;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.4rem;
         }
 
-        .pagination a,
-        .pagination span {
-            padding: 0.5rem 1rem;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 5px;
-            color: #eaeaea;
-            text-decoration: none;
-        }
-
-        .pagination a:hover {
-            background: rgba(0, 212, 255, 0.3);
-        }
-
-        .pagination .active {
-            background: linear-gradient(45deg, #00d4ff, #7b2cbf);
-        }
-
-        .pagination .disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 3rem;
-            color: #a0a0a0;
-        }
-
-        .empty-state-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-        }
-
-        /* Detail Page */
-        .detail-header {
+        .player-buttons {
             display: flex;
-            gap: 2rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
+            align-items: center;
+            gap: 1.5rem;
         }
 
-        .detail-image {
-            width: 250px;
-            height: 250px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
+        .control-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            font-size: 1.1rem;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        .control-btn:hover {
+            opacity: 1;
+        }
+
+        .play-btn {
+            width: 38px;
+            height: 38px;
+            background: #fff;
+            color: #5e5ce6;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 5rem;
-            flex-shrink: 0;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: transform 0.2s;
         }
 
-        .detail-image img {
+        .play-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .progress-container {
             width: 100%;
-            height: 100%;
-            object-fit: cover;
-            border-radius: 12px;
-        }
-
-        .detail-info {
-            flex: 1;
-            min-width: 200px;
-        }
-
-        .detail-info h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .detail-meta {
-            color: #a0a0a0;
-            margin-bottom: 1rem;
-        }
-
-        .detail-actions {
+            max-width: 500px;
             display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 2px;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .progress-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background: #ffcc00;
+            border-radius: 2px;
+            width: 0%;
+        }
+
+        .volume-controls {
+            display: flex;
+            align-items: center;
             gap: 1rem;
-            flex-wrap: wrap;
+            width: 180px;
+            justify-content: flex-end;
         }
 
-        /* Footer */
-        footer {
-            text-align: center;
-            padding: 2rem;
-            color: #666;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            margin-top: 2rem;
+        .player-close {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: #fff;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .nav-container {
-                flex-direction: column;
-            }
+        /* Generic styles */
+        .btn {
+            display: inline-block;
+            padding: 0.6rem 1.5rem;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
 
-            .nav-search {
-                width: 100%;
-            }
+        .btn-primary {
+            background: #5e5ce6;
+            color: #fff;
+        }
 
-            .nav-search input {
-                flex: 1;
-            }
+        .btn-primary:hover {
+            background: #4a48cc;
+            transform: translateY(-1px);
+        }
 
-            .detail-header {
-                flex-direction: column;
-                align-items: center;
-                text-align: center;
-            }
+        .section-title {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 2rem;
+            letter-spacing: -0.5px;
+        }
 
-            .detail-image {
-                width: 200px;
-                height: 200px;
-            }
+        .messages {
+            margin-bottom: 2rem;
+        }
+
+        .message {
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            background: #f5f5f7;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .message.success {
+            background: #e1f5fe;
+            color: #0288d1;
+            border-left: 4px solid #0288d1;
+        }
+
+        .message.error {
+            background: #ffebee;
+            color: #c62828;
+            border-left: 4px solid #c62828;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #d1d1d6;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #86868b;
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <nav>
-        <div class="nav-container">
-            <a href="{% url 'web:home' %}" class="nav-brand">
-                🎵 Music Player
+    <div class="app-wrapper">
+        <aside class="sidebar">
+            <a href="{% url 'web:home' %}" class="sidebar-logo">
+                <i class="fas fa-record-vinyl"></i>
+                MusicStore
             </a>
+            
+            <div class="sidebar-nav">
+                <div class="sidebar-section">
+                    <div class="sidebar-section-title">Menu</div>
+                    <a href="{% url 'web:home' %}" class="sidebar-link {% block nav_home %}{% endblock %}">
+                        <i class="fas fa-house"></i> Home
+                    </a>
+                    <a href="{% url 'web:song_list' %}" class="sidebar-link {% block nav_songs %}{% endblock %}">
+                        <i class="fas fa-music"></i> Library
+                    </a>
+                    <a href="{% url 'web:album_list' %}" class="sidebar-link {% block nav_albums %}{% endblock %}">
+                        <i class="fas fa-compact-disc"></i> Browse
+                    </a>
+                    <a href="{% url 'web:artist_list' %}" class="sidebar-link {% block nav_artists %}{% endblock %}">
+                        <i class="fas fa-microphone"></i> Artists
+                    </a>
+                </div>
 
-            <div class="nav-links">
-                <a href="{% url 'web:home' %}" class="nav-link {% block nav_home %}{% endblock %}">Home</a>
-                <a href="{% url 'web:song_list' %}" class="nav-link {% block nav_songs %}{% endblock %}">Songs</a>
-                <a href="{% url 'web:album_list' %}" class="nav-link {% block nav_albums %}{% endblock %}">Albums</a>
-                <a href="{% url 'web:artist_list' %}" class="nav-link {% block nav_artists %}{% endblock %}">Artists</a>
-                {% if user.is_authenticated %}
-                    <a href="{% url 'web:dashboard' %}" class="nav-link {% block nav_dashboard %}{% endblock %}">Dashboard</a>
-                    {% if user.userprofile.can_moderate %}
-                        <a href="{% url 'web:change_request_list' %}" class="nav-link {% block nav_moderation %}{% endblock %}">Moderation</a>
-                    {% endif %}
+                {% if user.is_authenticated and user.userprofile.can_moderate %}
+                <div class="sidebar-section" style="margin-top: 2rem;">
+                    <div class="sidebar-section-title">Moderation</div>
+                    <a href="{% url 'web:change_request_list' %}" class="sidebar-link {% block nav_moderation %}{% endblock %}">
+                        <i class="fas fa-clipboard-list"></i> Requests
+                    </a>
+                </div>
                 {% endif %}
             </div>
 
-            <form action="{% url 'web:search' %}" method="get" class="nav-search">
-                <input type="text" name="q" placeholder="Search songs, albums, artists..." value="{{ query|default:'' }}">
-                <button type="submit">🔍</button>
-            </form>
-
-            <div class="nav-user">
+            <div style="padding: 2rem;">
                 {% if user.is_authenticated %}
-                    <a href="{% url 'web:profile' %}">{{ user.username }}</a>
-                    <span class="badge badge-{{ user.userprofile.role }}">👤 {{ user.userprofile.get_role_display }}</span>
-                    <a href="{% url 'account_logout' %}" class="btn btn-secondary btn-sm">Logout</a>
-                {% else %}
-                    <a href="{% url 'account_login' %}" class="btn btn-primary btn-sm">Login</a>
+                <div class="sidebar-section-title" style="margin-bottom: 1rem;">Subscription</div>
+                <div style="background: #f5f5f7; padding: 1rem; border-radius: 12px;">
+                    <p style="font-size: 0.8rem; font-weight: 600; margin-bottom: 0.5rem;">Free Account</p>
+                    <a href="#" style="font-size: 0.75rem; color: #5e5ce6; font-weight: 600; text-decoration: none;">Upgrade to Pro</a>
+                </div>
                 {% endif %}
+            </div>
+        </aside>
+
+        <div class="main-container">
+            <header>
+                <div class="search-container">
+                    <i class="fas fa-search"></i>
+                    <form action="{% url 'web:search' %}" method="get">
+                        <input type="text" name="q" class="search-bar" placeholder="Search songs, artists, albums..." value="{{ request.GET.q }}">
+                    </form>
+                </div>
+                
+                <div class="header-actions">
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'web:profile' %}" class="user-profile">
+                            <span style="font-size: 0.9rem; font-weight: 600;">{{ user.username }}</span>
+                            <div class="user-avatar">
+                                {% if user.userprofile.avatar_url %}
+                                    <img src="{{ user.userprofile.avatar_url }}" alt="{{ user.username }}">
+                                {% else %}
+                                    {{ user.username|first|upper }}
+                                {% endif %}
+                            </div>
+                        </a>
+                        <a href="{% url 'account_logout' %}" style="color: #86868b; text-decoration: none; font-size: 0.85rem; font-weight: 600;">Sign out</a>
+                    {% else %}
+                        <a href="{% url 'account_login' %}" class="btn btn-primary">Sign In</a>
+                    {% endif %}
+                </div>
+            </header>
+
+            <main>
+                {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                            <div class="message {{ message.tags }}">
+                                {% if message.tags == 'success' %}<i class="fas fa-check-circle"></i>{% endif %}
+                                {% if message.tags == 'error' %}<i class="fas fa-exclamation-circle"></i>{% endif %}
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Persistent Player Bar -->
+    <div id="player-bar" class="player-bar">
+        <div class="player-container">
+            <div class="player-info">
+                <div id="player-artwork-container" class="player-artwork">
+                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">🎵</div>
+                </div>
+                <div class="player-text">
+                    <div id="player-title" class="player-title">Welcome to MusicStore</div>
+                    <div id="player-artist" class="player-artist">Select a song to play</div>
+                </div>
+            </div>
+            
+            <div class="player-controls">
+                <div class="player-buttons">
+                    <button class="control-btn"><i class="fas fa-random"></i></button>
+                    <button class="control-btn"><i class="fas fa-backward-step"></i></button>
+                    <button class="play-btn" id="master-play-btn"><i class="fas fa-play"></i></button>
+                    <button class="control-btn"><i class="fas fa-forward-step"></i></button>
+                    <button class="control-btn"><i class="fas fa-rotate"></i></button>
+                </div>
+                <div class="progress-container">
+                    <span id="player-current-time">0:00</span>
+                    <div class="progress-bar" id="player-progress-bar">
+                        <div class="progress-fill" id="player-progress-fill"></div>
+                    </div>
+                    <span id="player-duration">0:00</span>
+                </div>
+                <audio id="main-audio" style="display: none;"></audio>
+            </div>
+            
+            <div class="volume-controls">
+                <i class="fas fa-volume-high" style="font-size: 0.9rem; opacity: 0.7;"></i>
+                <div class="progress-bar" style="width: 80px; height: 3px;">
+                    <div class="progress-fill" style="width: 70%;"></div>
+                </div>
+                <button class="player-close" onclick="document.getElementById('player-bar').style.display='none'; document.getElementById('main-audio').pause();">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
         </div>
-    </nav>
+    </div>
 
-    <main>
-        {% if messages %}
-            <div class="messages">
-                {% for message in messages %}
-                    <div class="message {{ message.tags }}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
+    <script>
+        function playSong(title, artist, url, artworkUrl) {
+            const playerBar = document.getElementById('player-bar');
+            const audio = document.getElementById('main-audio');
+            const titleElem = document.getElementById('player-title');
+            const artistElem = document.getElementById('player-artist');
+            const artworkElem = document.getElementById('player-artwork-container');
+            const playBtn = document.getElementById('master-play-btn');
 
-        {% block content %}{% endblock %}
-    </main>
+            titleElem.textContent = title;
+            artistElem.textContent = artist;
+            
+            if (artworkUrl) {
+                artworkElem.innerHTML = `<img src="${artworkUrl}" style="width: 100%; height: 100%; object-fit: cover;">`;
+            } else {
+                artworkElem.innerHTML = `<div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem;">🎵</div>`;
+            }
 
-    <footer>
-        <p>Music Player &copy; {% now "Y" %} - Phase 2 Development</p>
-    </footer>
+            audio.src = url;
+            playerBar.style.display = 'block';
+            audio.play();
+            playBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        }
+
+        // Toggle play/pause
+        const masterPlayBtn = document.getElementById('master-play-btn');
+        masterPlayBtn.onclick = function() {
+            const audio = document.getElementById('main-audio');
+            if (!audio.src) return;
+            
+            if (audio.paused) {
+                audio.play();
+                this.innerHTML = '<i class="fas fa-pause"></i>';
+            } else {
+                audio.pause();
+                this.innerHTML = '<i class="fas fa-play"></i>';
+            }
+        };
+
+        // Update progress bar
+        const audio = document.getElementById('main-audio');
+        const progressFill = document.getElementById('player-progress-fill');
+        const currentTimeElem = document.getElementById('player-current-time');
+        const durationElem = document.getElementById('player-duration');
+
+        audio.ontimeupdate = function() {
+            if (audio.duration) {
+                const percent = (audio.currentTime / audio.duration) * 100;
+                progressFill.style.width = percent + '%';
+                
+                currentTimeElem.textContent = formatTime(audio.currentTime);
+                durationElem.textContent = formatTime(audio.duration);
+            }
+        };
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return mins + ':' + (secs < 10 ? '0' : '') + secs;
+        }
+    </script>
 
     {% block extra_js %}{% endblock %}
 </body>

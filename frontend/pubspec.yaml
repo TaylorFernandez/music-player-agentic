@@ -34,6 +34,12 @@ dependencies:
   # Permissions
   permission_handler: ^11.3.1
 
+  # Audio query for MediaStore access
+  on_audio_query: ^2.9.0
+
+  # Alternative: Direct platform channel implementation for MediaStore
+  # Note: on_audio_query has namespace issues with newer AGP
+
   # Metadata extraction from audio files
   audio_metadata_reader: ^1.2.1
 

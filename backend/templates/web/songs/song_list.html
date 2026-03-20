@@ -109,7 +109,7 @@
 
 {% if user.is_authenticated %}
 <div style="margin-top: 2rem;">
-    <a href="#" class="btn btn-primary" onclick="alert('Song creation form coming soon!'); return false;">+ Add Song</a>
+    <a href="{% url 'web:song_create' %}" class="btn btn-primary">+ Add Song</a>
 </div>
 {% endif %}
 {% endblock %}

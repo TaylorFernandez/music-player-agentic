@@ -6,6 +6,7 @@ from core.models import (
     SongAlbum,
     SongArtist,
     UserProfile,
+    UserSong,
 )
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -51,6 +52,7 @@ def dashboard(request):
 
     context = {
         "user_profile": user_profile,
+        "library_count": UserSong.objects.filter(user=request.user).count(),
         "pending_requests": ChangeRequest.objects.filter(status="pending").count()
         if user_profile.can_moderate
         else 0,
@@ -65,6 +67,27 @@ def dashboard(request):
         ).order_by("-created_at")[:10]
 
     return render(request, "web/dashboard.html", context)
+
+
+# ============================================================
+# Library View
+# ============================================================
+
+
+@login_required
+def library(request):
+    """User's personal library view."""
+    user_songs = (
+        UserSong.objects.filter(user=request.user)
+        .select_related("song")
+        .prefetch_related("song__artists", "song__albums")
+        .order_by("-added_at")
+    )
+
+    context = {
+        "user_songs": user_songs,
+    }
+    return render(request, "web/library.html", context)
 
 
 # ============================================================
@@ -179,15 +202,27 @@ def song_create(request):
             return redirect("web:song_detail", pk=song.id)
         else:
             # General users and moderators create change requests
+            import json
+
+            song_data = {
+                "title": title,
+                "duration": int(duration) if duration else 0,
+                "lyrics": lyrics,
+                "file_hash": file_hash,
+                "artwork_url": artwork_url,
+                "artist_ids": request.POST.getlist("artists"),
+                "album_ids": request.POST.getlist("albums"),
+            }
+
             ChangeRequest.objects.create(
                 user=request.user,
                 model_type="song",
                 model_id=0,  # New song
-                field_name="title",
+                field_name="all_fields",
                 old_value="",
-                new_value=title,
+                new_value=json.dumps(song_data),
                 status="pending",
-                notes=f"New song creation request. Duration: {duration}, Artists: {request.POST.getlist('artists')}",
+                notes=f"New song creation request: {title}",
             )
             messages.info(
                 request, "Your song creation request has been submitted for review."
@@ -443,7 +478,36 @@ def change_request_review(request, pk):
             if model_class:
                 if change_request.model_id == 0:
                     # Creating new object - handled differently
-                    pass
+                    import json
+
+                    try:
+                        data = json.loads(change_request.new_value)
+                        if change_request.model_type == "song":
+                            # Create the song
+                            song = Song.objects.create(
+                                title=data.get("title"),
+                                duration=data.get("duration", 0),
+                                lyrics=data.get("lyrics", ""),
+                                file_hash=data.get("file_hash", ""),
+                                artwork_url=data.get("artwork_url"),
+                            )
+
+                            # Add artists
+                            for i, artist_id in enumerate(data.get("artist_ids", [])):
+                                role = "main" if i == 0 else "featured"
+                                SongArtist.objects.create(
+                                    song=song, artist_id=artist_id, role=role
+                                )
+
+                            # Add albums
+                            for album_id in data.get("album_ids", []):
+                                SongAlbum.objects.create(song=song, album_id=album_id)
+
+                            messages.success(request, f"Song '{song.title}' created!")
+                        # Add logic for album/artist creation here if needed
+                    except Exception as e:
+                        messages.error(request, f"Error creating object: {str(e)}")
+                        return redirect("web:change_request_list")
                 else:
                     # Update existing object
                     obj = model_class.objects.filter(id=change_request.model_id).first()

@@ -1,0 +1,47 @@
+{% extends "web/base.html" %}
+
+{% block title %}My Library - Music Player{% endblock %}
+{% block nav_library %}active{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📚 My Library</h1>
+    <p>All songs synced from your mobile device</p>
+</div>
+
+{% if user_songs %}
+    <div class="grid grid-4">
+        {% for user_song in user_songs %}
+        {% with song=user_song.song %}
+        <a href="{% url 'web:song_detail' pk=song.id %}" class="item-card">
+            <div class="item-card-image">
+                {% if song.artwork_url %}
+                    <img src="{{ song.artwork_url }}" alt="{{ song.title }}">
+                {% else %}
+                    🎵
+                {% endif %}
+            </div>
+            <div class="item-card-content">
+                <div class="item-card-title">{{ song.title }}</div>
+                <div class="item-card-subtitle">
+                    {% for artist in song.artists.all %}{{ artist.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                    <br>
+                    <small>Added: {{ user_song.added_at|date:"M j, Y" }}</small>
+                </div>
+            </div>
+        </a>
+        {% endwith %}
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">📚</div>
+        <h3>Your library is empty</h3>
+        <p>Sync your local music from the mobile app to see it here.</p>
+        <div style="margin-top: 2rem;">
+            <a href="{% url 'web:song_list' %}" class="btn btn-primary">Browse All Songs</a>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}

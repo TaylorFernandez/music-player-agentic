@@ -65,8 +65,8 @@ class MusicPlayerApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         Provider<ApiService>.value(value: apiService),
-        Provider<AudioPlayerService>.value(value: audioPlayerService),
-        Provider<LibraryService>.value(value: libraryService),
+        ChangeNotifierProvider<AudioPlayerService>.value(value: audioPlayerService),
+        ChangeNotifierProvider<LibraryService>.value(value: libraryService),
         ChangeNotifierProvider<AuthProvider>(
           create: (context) => AuthProvider(apiService),
         ),
@@ -81,9 +81,9 @@ class MusicPlayerApp extends StatelessWidget {
       child: MaterialApp(
         title: dotenv.env['APP_NAME'] ?? 'Music Player',
         debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
+        theme: AppTheme.darkTheme, // Default to dark
         darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
+        themeMode: ThemeMode.dark,
         home: const MainScreen(),
       ),
     );
@@ -114,16 +114,29 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _checkAuth() async {
-    final authProvider = context.read<AuthProvider>();
-    await authProvider.checkAuthStatus();
+    // Use addPostFrameCallback to avoid calling notifyListeners during build
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final authProvider = context.read<AuthProvider>();
+      final musicProvider = context.read<MusicProvider>();
+
+      await authProvider.checkAuthStatus();
+
+      // Trigger library sync if authenticated
+      if (authProvider.isAuthenticated) {
+        debugPrint('User is authenticated, triggering library sync...');
+        await musicProvider.syncLibrary();
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
+      body: SafeArea(
+        child: IndexedStack(
+          index: _currentIndex,
+          children: _screens,
+        ),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,

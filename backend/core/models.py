@@ -208,6 +208,25 @@ class UserProfile(models.Model):
         return self.role in ["moderator", "owner"]
 
 
+class UserSong(models.Model):
+    """Represents a song in a user's personal library."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="library_songs")
+    song = models.ForeignKey("Song", on_delete=models.CASCADE, related_name="user_libraries")
+    added_at = models.DateTimeField(auto_now_add=True)
+    is_favorite = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ["user", "song"]
+        ordering = ["-added_at"]
+        indexes = [
+            models.Index(fields=["user", "added_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username}'s library: {self.song.title}"
+
+
 class ChangeRequest(models.Model):
     """Tracks proposed changes to Song, Album, or Artist data for moderation."""
 

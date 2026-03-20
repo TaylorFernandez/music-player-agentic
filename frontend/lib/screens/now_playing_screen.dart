@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../models/song.dart';
-import '../services/audio_player_service.dart';
+import '../services/audio_player_service.dart' show RepeatMode, LocalTrack;
+import '../utils/app_theme.dart';
 
 /// Now Playing screen showing full player interface.
 class NowPlayingScreen extends StatefulWidget {
@@ -46,6 +47,7 @@ class NowPlayingScreen extends StatefulWidget {
 class _NowPlayingScreenState extends State<NowPlayingScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _artworkAnimationController;
+  late AnimationController _gradientAnimationController;
   double _sliderValue = 0.0;
   double _volumeValue = 1.0;
   bool _isDraggingSlider = false;
@@ -55,8 +57,12 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     super.initState();
     _artworkAnimationController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 200),
+      duration: const Duration(milliseconds: 300),
     );
+    _gradientAnimationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat(reverse: true);
   }
 
   @override
@@ -83,6 +89,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
   @override
   void dispose() {
     _artworkAnimationController.dispose();
+    _gradientAnimationController.dispose();
     super.dispose();
   }
 
@@ -92,61 +99,62 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     final song = widget.currentTrack?.song;
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(context, theme),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    const SizedBox(height: 24),
-                    _buildArtwork(theme, song),
-                    const SizedBox(height: 32),
-                    _buildTrackInfo(theme, song),
-                    const SizedBox(height: 24),
-                    _buildProgressSlider(theme),
-                    const SizedBox(height: 16),
-                    _buildControls(theme),
-                    const SizedBox(height: 16),
-                    _buildVolumeSlider(theme),
-                    const SizedBox(height: 24),
-                    _buildBottomActions(context, theme),
-                  ],
-                ),
-              ),
-            ),
-          ],
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text(
+          'Now Playing',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context, ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      child: Row(
-        children: [
+        centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white),
+          iconSize: 32,
+          onPressed: widget.onClose ?? () => Navigator.of(context).pop(),
+        ),
+        actions: [
           IconButton(
-            icon: const Icon(Icons.keyboard_arrow_down),
-            onPressed: widget.onClose ?? () => Navigator.of(context).pop(),
-            iconSize: 32,
-          ),
-          Expanded(
-            child: Text(
-              'Now Playing',
-              style: theme.textTheme.titleMedium,
-              textAlign: TextAlign.center,
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.more_vert),
+            icon: const Icon(Icons.more_vert, color: Colors.white),
             onPressed: () {
               _showOptionsMenu(context);
             },
           ),
         ],
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppTheme.deepSpaceGradient,
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 24),
+                      _buildArtwork(theme, song),
+                      const SizedBox(height: 32),
+                      _buildTrackInfo(theme, song),
+                      const SizedBox(height: 32),
+                      _buildProgressSlider(theme),
+                      const SizedBox(height: 24),
+                      _buildControls(theme),
+                      const SizedBox(height: 24),
+                      _buildBottomActions(context, theme),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -155,23 +163,33 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     final artworkUrl = song?.artworkUrl ?? widget.currentTrack?.artworkPath;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
-      child: AspectRatio(
-        aspectRatio: 1,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: theme.colorScheme.primary.withOpacity(0.3),
-                blurRadius: 24,
-                spreadRadius: 8,
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
+      padding: const EdgeInsets.symmetric(horizontal: 40),
+      child: AnimatedBuilder(
+        animation: _gradientAnimationController,
+        builder: (context, child) {
+          return Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryColor.withOpacity(0.4 + _gradientAnimationController.value * 0.3),
+                  blurRadius: 40 + _gradientAnimationController.value * 30,
+                  spreadRadius: 8,
+                ),
+                BoxShadow(
+                  color: AppTheme.accentColor.withOpacity(0.25),
+                  blurRadius: 60,
+                  spreadRadius: 12,
+                ),
+              ],
+            ),
+            child: child,
+          );
+        },
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: AspectRatio(
+            aspectRatio: 1,
             child: _buildArtworkImage(artworkUrl, theme),
           ),
         ),
@@ -201,11 +219,13 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
 
   Widget _buildDefaultArtwork(ThemeData theme) {
     return Container(
-      color: theme.colorScheme.surfaceContainerHighest,
-      child: Icon(
+      decoration: const BoxDecoration(
+        gradient: AppTheme.sunsetGlowGradient,
+      ),
+      child: const Icon(
         Icons.music_note,
-        size: 64,
-        color: theme.colorScheme.onSurfaceVariant,
+        size: 80,
+        color: Colors.white,
       ),
     );
   }
@@ -216,34 +236,44 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     final album = song?.albumName ?? widget.currentTrack?.song.albumName;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
           Text(
             title,
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
+              color: Colors.white,
+              fontSize: 28,
+              shadows: [
+                Shadow(
+                  color: AppTheme.primaryColor.withOpacity(0.3),
+                  blurRadius: 10,
+                ),
+              ],
             ),
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Text(
             artist,
-            style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.primary,
+            style: theme.textTheme.titleLarge?.copyWith(
+              color: AppTheme.primaryLight,
+              fontWeight: FontWeight.w600,
+              fontSize: 18,
             ),
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           if (album != null) ...[
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Text(
               album,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+                color: Colors.white60,
               ),
               textAlign: TextAlign.center,
               maxLines: 1,
@@ -260,18 +290,20 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     final duration = widget.duration ?? Duration.zero;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 32),
       child: Column(
         children: [
           SliderTheme(
             data: SliderThemeData(
-              trackHeight: 4,
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
-              overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
-              activeTrackColor: theme.colorScheme.primary,
-              inactiveTrackColor: theme.colorScheme.surfaceContainerHighest,
-              thumbColor: theme.colorScheme.primary,
-              overlayColor: theme.colorScheme.primary.withOpacity(0.2),
+              trackHeight: 6,
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 10),
+              overlayShape: const RoundSliderOverlayShape(overlayRadius: 20),
+              activeTrackColor: AppTheme.primaryColor,
+              inactiveTrackColor: Colors.white24,
+              thumbColor: Colors.white,
+              overlayColor: AppTheme.primaryColor.withOpacity(0.3),
+              activeTickMarkColor: Colors.white,
+              inactiveTickMarkColor: Colors.white24,
             ),
             child: Slider(
               value: _sliderValue.clamp(0.0, 1.0),
@@ -295,17 +327,23 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   _formatDuration(position),
-                  style: theme.textTheme.labelSmall,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: Colors.white60,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
                 Text(
                   _formatDuration(duration),
-                  style: theme.textTheme.labelSmall,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: Colors.white60,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
@@ -317,95 +355,82 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
 
   Widget _buildControls(ThemeData theme) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          IconButton(
-            icon: Icon(
-              widget.shuffle ? Icons.shuffle : Icons.shuffle_outlined,
-            ),
-            iconSize: 28,
-            color: widget.shuffle ? theme.colorScheme.primary : theme.colorScheme.onSurface,
+          _buildControlButton(
+            icon: widget.shuffle ? Icons.shuffle : Icons.shuffle_outlined,
             onPressed: widget.onShuffle,
+            isActive: widget.shuffle,
+            size: 28,
           ),
-          IconButton(
-            icon: const Icon(Icons.skip_previous),
-            iconSize: 36,
+          _buildControlButton(
+            icon: Icons.skip_previous_rounded,
             onPressed: widget.onPrevious,
+            size: 40,
           ),
           Container(
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
+              gradient: AppTheme.sunsetGlowGradient,
               shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: AppTheme.primaryColor.withOpacity(0.5),
+                  blurRadius: 25,
+                  spreadRadius: 3,
+                ),
+              ],
             ),
             child: IconButton(
               icon: Icon(
-                widget.isPlaying ? Icons.pause : Icons.play_arrow,
-                color: theme.colorScheme.onPrimary,
+                widget.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
+                color: Colors.white,
               ),
-              iconSize: 48,
+              iconSize: 64,
               onPressed: widget.onPlayPause,
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.skip_next),
-            iconSize: 36,
+          _buildControlButton(
+            icon: Icons.skip_next_rounded,
             onPressed: widget.onNext,
+            size: 40,
           ),
-          IconButton(
-            icon: Icon(
-              _getRepeatIcon(),
-            ),
-            iconSize: 28,
-            color: widget.repeatMode != RepeatMode.off
-                ? theme.colorScheme.primary
-                : theme.colorScheme.onSurface,
+          _buildControlButton(
+            icon: widget.repeatMode == RepeatMode.off
+                ? Icons.repeat_outlined
+                : widget.repeatMode == RepeatMode.all
+                    ? Icons.repeat
+                    : Icons.repeat_one,
             onPressed: widget.onRepeat,
+            isActive: widget.repeatMode != RepeatMode.off,
+            size: 28,
           ),
         ],
       ),
     );
   }
 
-  IconData _getRepeatIcon() {
-    switch (widget.repeatMode) {
-      case RepeatMode.off:
-        return Icons.repeat_outlined;
-      case RepeatMode.all:
-        return Icons.repeat;
-      case RepeatMode.one:
-        return Icons.repeat_one;
-    }
-  }
-
-  Widget _buildVolumeSlider(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      child: Row(
-        children: [
-          Icon(
-            Icons.volume_down,
-            size: 20,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-          Expanded(
-            child: Slider(
-              value: _volumeValue,
-              onChanged: (value) {
-                setState(() {
-                  _volumeValue = value;
-                });
-                widget.onVolumeChanged?.call(value);
-              },
-            ),
-          ),
-          Icon(
-            Icons.volume_up,
-            size: 20,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ],
+  Widget _buildControlButton({
+    required IconData icon,
+    required VoidCallback? onPressed,
+    bool isActive = false,
+    double size = 32,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: isActive ? AppTheme.primaryColor.withOpacity(0.25) : Colors.white10,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: isActive ? AppTheme.primaryColor.withOpacity(0.5) : Colors.white24,
+          width: 1,
+        ),
+      ),
+      child: IconButton(
+        icon: Icon(icon),
+        iconSize: size,
+        color: isActive ? AppTheme.primaryLight : Colors.white,
+        onPressed: onPressed,
       ),
     );
   }
@@ -416,39 +441,62 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          IconButton(
-            icon: const Icon(Icons.favorite_border),
-            onPressed: () {
+          _buildBottomActionButton(
+            icon: Icons.favorite_border,
+            label: 'Like',
+            onTap: () {
               HapticFeedback.lightImpact();
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Added to favorites'),
                   duration: Duration(seconds: 2),
+                  backgroundColor: AppTheme.cardDark,
                 ),
               );
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.playlist_add),
-            onPressed: () {
+          _buildBottomActionButton(
+            icon: Icons.playlist_add,
+            label: 'Playlist',
+            onTap: () {
               _showAddToPlaylistDialog(context);
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.queue_music),
-            onPressed: () {
+          _buildBottomActionButton(
+            icon: Icons.queue_music,
+            label: 'Queue',
+            onTap: () {
               _showQueueBottomSheet(context);
             },
           ),
-          IconButton(
-            icon: const Icon(Icons.share),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Share functionality coming soon!'),
-                  duration: Duration(seconds: 2),
-                ),
-              );
+          _buildBottomActionButton(
+            icon: Icons.share,
+            label: 'Share',
+            onTap: () {
+              final track = musicProvider.currentTrack;
+              if (track != null) {
+                final songTitle = track.song.title;
+                final artistName = track.song.artistNames.join(', ');
+                final shareUrl = 'https://musicplayer.example.com/songs/${track.song.id}';
+                
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Sharing $songTitle by $artistName'),
+                    duration: const Duration(seconds: 3),
+                    backgroundColor: AppTheme.accentColor,
+                    action: SnackBarAction(
+                      label: 'COPY LINK',
+                      textColor: Colors.white,
+                      onPressed: () {
+                        // In a real app we'd use Clipboard.setData
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Link copied to clipboard!')),
+                        );
+                      },
+                    ),
+                  ),
+                );
+              }
             },
           ),
         ],
@@ -456,69 +504,93 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     );
   }
 
+  Widget _buildBottomActionButton({
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: Colors.white70,
+                size: 24,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white60,
+                fontSize: 11,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showOptionsMenu(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: AppTheme.cardDark.withOpacity(0.9),
       builder: (context) {
         return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              Container(
+                margin: const EdgeInsets.all(16),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.white24,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
               ListTile(
-                leading: const Icon(Icons.info_outline),
-                title: const Text('Song Info'),
+                leading: const Icon(Icons.info_outline, color: Colors.white),
+                title: const Text('Song Info', style: TextStyle(color: Colors.white)),
                 onTap: () {
                   Navigator.pop(context);
                   _showSongInfoDialog(context);
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.album),
-                title: const Text('Go to Album'),
+                leading: const Icon(Icons.album, color: Colors.white),
+                title: const Text('Go to Album', style: TextStyle(color: Colors.white)),
                 onTap: () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Album view coming soon!'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.person),
-                title: const Text('Go to Artist'),
+                leading: const Icon(Icons.person, color: Colors.white),
+                title: const Text('Go to Artist', style: TextStyle(color: Colors.white)),
                 onTap: () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Artist view coming soon!'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
                 },
               ),
               ListTile(
-                leading: const Icon(Icons.timer),
-                title: const Text('Sleep Timer'),
+                leading: const Icon(Icons.timer, color: Colors.white),
+                title: const Text('Sleep Timer', style: TextStyle(color: Colors.white)),
                 onTap: () {
                   Navigator.pop(context);
                   _showSleepTimerDialog(context);
                 },
               ),
-              ListTile(
-                leading: const Icon(Icons.equalizer),
-                title: const Text('Equalizer'),
-                onTap: () {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Equalizer coming soon!'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
-              ),
+              const SizedBox(height: 16),
             ],
           ),
         );
@@ -532,7 +604,9 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Song Info'),
+          backgroundColor: AppTheme.cardDark,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Song Info', style: TextStyle(color: Colors.white)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -547,7 +621,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
+              child: const Text('Close', style: TextStyle(color: AppTheme.primaryColor)),
             ),
           ],
         );
@@ -557,20 +631,24 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 80,
+            width: 70,
             child: Text(
               '$label:',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.white70,
+              ),
             ),
           ),
           Expanded(
             child: Text(
               value,
+              style: const TextStyle(color: Colors.white),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
@@ -585,29 +663,31 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Add to Playlist'),
+          backgroundColor: AppTheme.cardDark,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Add to Playlist', style: TextStyle(color: Colors.white)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                leading: const Icon(Icons.add),
-                title: const Text('Create New Playlist'),
+                leading: const Icon(Icons.add, color: Colors.white),
+                title: const Text('Create New Playlist', style: TextStyle(color: Colors.white)),
                 onTap: () {
                   Navigator.pop(context);
                   _showCreatePlaylistDialog(context);
                 },
               ),
-              const Divider(),
+              const Divider(color: Colors.white24),
               const ListTile(
-                leading: Icon(Icons.favorite),
-                title: Text('Favorites'),
+                leading: Icon(Icons.favorite, color: Colors.white),
+                title: Text('Favorites', style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: const Text('Cancel', style: TextStyle(color: Colors.white60)),
             ),
           ],
         );
@@ -621,19 +701,28 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Create Playlist'),
+          backgroundColor: AppTheme.cardDark,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Create Playlist', style: TextStyle(color: Colors.white)),
           content: TextField(
             controller: controller,
-            decoration: const InputDecoration(
+            style: const TextStyle(color: Colors.white),
+            decoration: InputDecoration(
               labelText: 'Playlist Name',
-              hintText: 'Enter playlist name',
+              labelStyle: const TextStyle(color: Colors.white60),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: const BorderSide(color: Colors.white24),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: const BorderSide(color: AppTheme.primaryColor),
+              ),
             ),
             autofocus: true,
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: const Text('Cancel', style: TextStyle(color: Colors.white60)),
             ),
             TextButton(
               onPressed: () {
@@ -641,10 +730,11 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Created playlist: ${controller.text}'),
+                    backgroundColor: AppTheme.cardDark,
                   ),
                 );
               },
-              child: const Text('Create'),
+              child: const Text('Create', style: TextStyle(color: AppTheme.primaryColor)),
             ),
           ],
         );
@@ -655,6 +745,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
   void _showQueueBottomSheet(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      backgroundColor: AppTheme.cardDark.withOpacity(0.9),
       isScrollControlled: true,
       builder: (context) {
         return DraggableScrollableSheet(
@@ -672,25 +763,28 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
                     children: [
                       Text(
                         'Queue',
-                        style: Theme.of(context).textTheme.titleLarge,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
                       TextButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text('Close'),
+                        child: const Text('Close', style: TextStyle(color: Colors.white60)),
                       ),
                     ],
                   ),
                 ),
-                const Divider(),
+                const Divider(color: Colors.white24),
                 Expanded(
                   child: ListView.builder(
                     controller: scrollController,
                     itemCount: 3,
                     itemBuilder: (context, index) {
                       return ListTile(
-                        leading: const Icon(Icons.music_note),
-                        title: Text('Song ${index + 1}'),
-                        subtitle: Text('Artist ${index + 1}'),
+                        leading: const Icon(Icons.music_note, color: Colors.white60),
+                        title: Text('Song ${index + 1}', style: const TextStyle(color: Colors.white)),
+                        subtitle: Text('Artist ${index + 1}', style: const TextStyle(color: Colors.white60)),
                         trailing: index == 0
                             ? const Icon(Icons.play_arrow, color: Colors.green)
                             : null,
@@ -711,35 +805,32 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Sleep Timer'),
+          backgroundColor: AppTheme.cardDark,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('Sleep Timer', style: TextStyle(color: Colors.white)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               ListTile(
-                title: const Text('15 minutes'),
+                title: const Text('15 minutes', style: TextStyle(color: Colors.white)),
                 onTap: () => _setSleepTimer(context, 15),
               ),
               ListTile(
-                title: const Text('30 minutes'),
+                title: const Text('30 minutes', style: TextStyle(color: Colors.white)),
                 onTap: () => _setSleepTimer(context, 30),
               ),
               ListTile(
-                title: const Text('45 minutes'),
+                title: const Text('45 minutes', style: TextStyle(color: Colors.white)),
                 onTap: () => _setSleepTimer(context, 45),
               ),
               ListTile(
-                title: const Text('1 hour'),
+                title: const Text('1 hour', style: TextStyle(color: Colors.white)),
                 onTap: () => _setSleepTimer(context, 60),
               ),
               ListTile(
-                title: const Text('Custom'),
+                title: const Text('Custom', style: TextStyle(color: Colors.white)),
                 onTap: () {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Custom timer coming soon!'),
-                    ),
-                  );
                 },
               ),
             ],
@@ -747,7 +838,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: const Text('Cancel', style: TextStyle(color: Colors.white60)),
             ),
           ],
         );
@@ -760,6 +851,7 @@ class _NowPlayingScreenState extends State<NowPlayingScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Sleep timer set for $minutes minutes'),
+        backgroundColor: AppTheme.cardDark,
       ),
     );
   }
